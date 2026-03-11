@@ -1,0 +1,673 @@
+/* ============================= */
+/* GLOBAL */
+/* ============================= */
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
+    'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans',
+    'Helvetica Neue', sans-serif;
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  transition: background 0.3s, color 0.3s;
+}
+
+/* Code font */
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+/* ============================= */
+/* LIGHT MODE */
+/* ============================= */
+
+body.light {
+  background-color: #f8f9fa;
+  color: #212529;
+}
+
+/* navbar */
+
+body.light .navbar {
+  background: white !important;
+  border-bottom: 1px solid #eee;
+}
+
+/* card */
+
+body.light .card {
+  background: white;
+  color: #212529;
+}
+
+/* footer */
+
+body.light .custom-footer {
+  background: linear-gradient(135deg, #0d6efd, #20c997);
+}
+
+/* ============================= */
+/* DARK MODE */
+/* ============================= */
+
+body.dark {
+  background-color: #121212;
+  color: #e4e6eb;
+}
+
+/* navbar */
+
+body.dark .navbar {
+  background: #1a1a1a !important;
+  border-bottom: 1px solid #333;
+}
+
+/* card */
+
+body.dark .card {
+  background-color: #1e1e1e;
+  color: #e4e6eb;
+  border: 1px solid #2c2c2c;
+}
+
+/* footer */
+
+body.dark .custom-footer {
+  background: #1a1a1a;
+}
+
+/* ============================= */
+/* NAVBAR LINK */
+/* ============================= */
+
+.custom-link {
+  position: relative;
+  font-weight: 500;
+  transition: 0.3s;
+}
+
+.custom-link:hover {
+  color: #0d6efd !important;
+}
+
+/* underline animation */
+
+.custom-link::after {
+  content: "";
+  position: absolute;
+  width: 0%;
+  height: 2px;
+  left: 0;
+  bottom: -4px;
+  background-color: #0d6efd;
+  transition: 0.3s ease;
+}
+
+.custom-link:hover::after {
+  width: 100%;
+}
+
+/* active */
+
+.active-link {
+  color: #0d6efd !important;
+}
+
+.active-link::after {
+  width: 100%;
+}
+
+/* dark hover */
+
+body.dark .custom-link:hover {
+  color: #66b2ff !important;
+}
+
+/* ============================= */
+/* PRODUCT CARD */
+/* ============================= */
+
+.product-card {
+  border-radius: 14px;
+  overflow: hidden;
+  transition: 0.3s;
+}
+
+.product-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.product-card img {
+  height: 220px;
+  object-fit: cover;
+}
+
+/* ============================= */
+/* IMAGE */
+/* ============================= */
+
+.card img {
+  object-fit: cover;
+}
+
+/* ============================= */
+/* BUTTON */
+/* ============================= */
+
+.btn {
+  transition: 0.25s;
+}
+
+body.dark .btn-outline-dark {
+  color: white;
+  border-color: white;
+}
+
+body.dark .btn-outline-dark:hover {
+  background: #444;
+}
+
+/* ============================= */
+/* FORM */
+/* ============================= */
+
+body.dark .form-control {
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  color: white;
+}
+
+body.dark .form-control::placeholder {
+  color: #bbb;
+}
+
+/* ============================= */
+/* TABLE */
+/* ============================= */
+
+body.dark table {
+  color: white;
+}
+
+body.dark .table {
+  color: white;
+}
+
+body.dark .table thead {
+  background-color: #1f1f1f;
+}
+
+/* ============================= */
+/* CART BUTTON */
+/* ============================= */
+
+.cart-btn {
+  font-size: 20px;
+  background: transparent;
+  border: none;
+}
+
+/* ============================= */
+/* HERO SECTION */
+/* ============================= */
+
+.hero-section {
+  height: 70vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: linear-gradient(
+    135deg,
+    #0f2027,
+    #203a43,
+    #2c5364
+  );
+
+  color: white;
+}
+
+.hero-title {
+  font-size: 56px;
+  font-weight: 700;
+}
+
+.hero-title span {
+  color: #0d6efd;
+}
+
+.hero-subtitle {
+  font-size: 20px;
+  opacity: 0.9;
+}
+
+/* ============================= */
+/* FOOTER */
+/* ============================= */
+
+.custom-footer {
+  color: white;
+  padding-top: 40px;
+}
+
+.custom-footer a {
+  color: rgba(255,255,255,0.9);
+  text-decoration: none;
+}
+
+.custom-footer a:hover {
+  color: white;
+  text-decoration: underline;
+}
+
+.footer-bottom {
+  background-color: rgba(0,0,0,0.1);
+  padding: 10px 0;
+}
+
+/* ============================= */
+/* CHAT BOX */
+/* ============================= */
+
+body.dark .card-header {
+  background-color: #0d6efd;
+}
+
+/* ============================= */
+/* SCROLLBAR */
+/* ============================= */
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 5px;
+}
+
+body.dark ::-webkit-scrollbar-thumb {
+  background: #444;
+}
+
+/* ============================= */
+/* CONTAINER */
+/* ============================= */
+
+.container {
+  max-width: 1200px;
+}
+
+.checkout-form{
+background:white;
+}
+
+body.dark .checkout-form{
+background:#1e1e1e;
+border:1px solid #333;
+}
+
+body.dark .table{
+background:#1e1e1e;
+}
+
+body.dark .table td{
+border-color:#333;
+}
+
+body.dark .table th{
+border-color:#333;
+}
+
+
+/* FE/src/index.css */
+
+.auth-modal-content {
+  border-radius: 25px !important; /* Bo tròn đúng điệu mẫu */
+  transition: all 0.3s ease;
+}
+
+/* Nâng cấp input cho sang trọng */
+.auth-input {
+  border-radius: 12px !important;
+  font-size: 15px;
+  transition: transform 0.2s ease;
+}
+
+.auth-input:focus {
+  transform: scale(1.02);
+  box-shadow: 0 5px 15px rgba(13, 110, 253, 0.15) !important;
+}
+
+/* Hiệu ứng nút bấm Gradient */
+.btn-auth-gradient {
+  background: linear-gradient(135deg, #21d4fd 0%, #b721ff 100%);
+  border: none;
+  color: white;
+  border-radius: 12px;
+  letter-spacing: 1px;
+}
+
+.btn-auth-gradient:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+  color: white;
+}
+
+/* Chỉnh màu cho chế độ tối để không bị đen thui */
+body.dark .auth-modal-content {
+  background-color: #2c2f33 !important; /* Màu xám than thay vì đen tuyền */
+}
+
+.unread-dot {
+  width: 10px;
+  height: 10px;
+  background-color: #ff4d4d; /* Màu đỏ thông báo */
+  border-radius: 50%;
+  display: inline-block;
+  margin-left: 10px;
+  box-shadow: 0 0 5px rgba(255, 77, 77, 0.5);
+  animation: pulse-red 2s infinite;
+}
+
+@keyframes pulse-red {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(255, 77, 77, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 77, 77, 0); }
+}
+
+
+/* index.css */
+
+.transition-all {
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* Hiệu ứng nhấc bổng thẻ card và đổ bóng sâu hơn khi hover */
+.product-card-hover:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Hiệu ứng phóng nhẹ ảnh bên trong card */
+.img-zoom {
+  transition: transform 0.5s ease;
+}
+
+.product-card-hover:hover .img-zoom {
+  transform: scale(1.1);
+}
+
+/* Màu nền phụ cho mode sáng */
+.bg-light-subtle {
+  background-color: #f8f9fa !important;
+}
+
+/* Badge màu Primary nhẹ */
+.bg-primary-subtle {
+  background-color: #e7f1ff !important;
+}
+
+.custom-footer {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.footer-links a {
+  color: inherit;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+}
+
+.footer-links a:hover {
+  opacity: 1;
+  color: #0d6efd !important; /* Màu xanh Primary của bạn */
+  padding-left: 5px;
+}
+
+/* Hiệu ứng bóng đổ ngược lên trên cho mode sáng */
+.shadow-lg-top {
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.05);
+}
+
+.text-white-50 {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.chat-bubble-wrapper .btn-delete-msg {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+/* Hiện nút xóa bên trái tin nhắn admin, bên phải tin nhắn user */
+.justify-content-end .btn-delete-msg { left: -30px; }
+.justify-content-start .btn-delete-msg { right: -30px; }
+
+.chat-bubble-wrapper:hover .btn-delete-msg {
+  opacity: 0.6;
+}
+
+.chat-bubble-wrapper .btn-delete-msg:hover {
+  opacity: 1;
+  color: #dc3545;
+}
+
+.chat-bubble-wrapper:hover .btn-delete-msg, 
+.chat-bubble-wrapper:hover .btn-delete-msg-client {
+  opacity: 1;
+}
+
+.btn-delete-msg {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.justify-content-end .btn-delete-msg { left: -30px; }
+.justify-content-start .btn-delete-msg { right: -30px; }
+
+.btn-delete-msg-client {
+  position: absolute;
+  left: -20px;
+  top: 5px;
+  border: none;
+  background: transparent;
+  color: #ff4d4d;
+  font-size: 18px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+/* Tùy chỉnh thanh cuộn cho khung chat */
+.chat-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.chat-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+body.dark .chat-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Hiệu ứng bong bóng chat hiện đại */
+.chat-bubble {
+  max-width: 75%;
+  padding: 10px 16px;
+  border-radius: 20px;
+  position: relative;
+  font-size: 14.5px;
+  line-height: 1.5;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.chat-bubble-admin {
+  background: linear-gradient(135deg, #0d6efd 0%, #004dc0 100%);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-bubble-user {
+  background: #ffffff;
+  color: #212529;
+  border: 1px solid #e9ecef;
+  border-bottom-left-radius: 4px;
+}
+
+body.dark .chat-bubble-user {
+  background: #2c2f33;
+  color: #e4e6eb;
+  border-color: #40444b;
+}
+
+/* Nút xóa ẩn hiện khi di chuột */
+.delete-action {
+  opacity: 0;
+  transition: all 0.2s;
+  cursor: pointer;
+  color: #ff4d4d;
+  font-size: 1.1rem;
+}
+.chat-bubble-wrapper:hover .delete-action {
+  opacity: 1;
+}
+
+/* Chấm đỏ thông báo tin nhắn mới */
+.status-dot {
+  width: 10px;
+  height: 10px;
+  background-color: #ff4d4d;
+  border-radius: 50%;
+  box-shadow: 0 0 5px rgba(255, 77, 77, 0.5);
+  animation: pulse-red 2s infinite;
+}
+
+chat-scrollbar {
+  overflow-y: auto;
+  scrollbar-gutter: stable; /* Giữ layout ổn định khi scrollbar hiện ra */
+}
+
+/* Fix lỗi tràn layout khi dùng flex-column */
+.flex-grow-1 {
+  min-height: 0; 
+}
+
+/* Đảm bảo bong bóng chat không làm vỡ layout */
+.chat-bubble {
+  max-width: 80% !important;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+/* index.css */
+:root {
+  --chat-bg-light: #ffffff;
+  --chat-bg-dark: #1e1e1e;
+  --bubble-user-light: #f0f2f5;
+  --bubble-user-dark: #2c2f33;
+  --text-main-light: #050505;
+  --text-main-dark: #e4e6eb;
+}
+
+/* Khung bọc tin nhắn */
+.chat-container-fixed {
+  height: calc(100vh - 80px); /* Khóa chiều cao theo màn hình */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Vùng nội dung chat */
+.chat-messages-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  scrollbar-width: thin;
+}
+
+/* Bong bóng chat hiện đại */
+.bubble {
+  max-width: 75%;
+  padding: 12px 16px;
+  border-radius: 18px;
+  position: relative;
+  font-size: 15px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Tin nhắn từ Admin (Xanh Gradient) */
+.bubble-admin {
+  background: linear-gradient(135deg, #0084ff 0%, #0072ff 100%);
+  color: #ffffff !important;
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+}
+
+/* Tin nhắn từ User */
+.bubble-user {
+  background-color: var(--bubble-user-light);
+  color: var(--text-main-light) !important;
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+}
+
+/* Ép màu trong Dark Mode */
+body.dark .bubble-user {
+  background-color: var(--bubble-user-dark);
+  color: var(--text-main-dark) !important;
+}
+
+/* Ô input chat - Luôn rõ chữ */
+.chat-input-wrapper {
+  padding: 15px;
+  background: transparent;
+}
+
+.chat-input-field {
+  border-radius: 25px !important;
+  padding: 10px 20px !important;
+  border: 1px solid #ddd !important;
+  background-color: #fff !important;
+  color: #000 !important; /* Luôn là chữ đen trên nền trắng cho dễ đọc */
+  font-size: 15px;
+}
+
+body.dark .chat-input-field {
+  background-color: #3a3b3c !important;
+  color: #fff !important; /* Chữ trắng trên nền xám tối */
+  border-color: #4e4f50 !important;
+}
+
+/* Nút xóa tinh tế */
+.msg-delete-btn {
+  opacity: 0;
+  cursor: pointer;
+  color: #ff4d4d;
+  font-size: 12px;
+  transition: 0.2s;
+  margin: 0 8px;
+}
+.chat-bubble-group:hover .msg-delete-btn {
+  opacity: 1;
+}
+
