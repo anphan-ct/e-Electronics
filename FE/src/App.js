@@ -10,6 +10,7 @@ import Footer from "./components/Footer";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import ChatBox from "./components/ChatBox";
+import AIChatBox from "./components/AIChatBox";
 
 // Pages
 import Home from "./pages/Home";
@@ -52,6 +53,7 @@ function App() {
       <Login />
       <Register />
       <ChatBox />
+      <AIChatBox/>
 
       {/* THÔNG BÁO: Tự động đổi màu theo theme của MyShop */}
       <ToastContainer 
