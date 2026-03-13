@@ -81,8 +81,11 @@ function Header() {
           </div>
 
           <div className="d-flex align-items-center gap-2">
+
+                
+
             {/* Toggle Button: Sử dụng outline-dark cho Light Mode để rõ nét hơn */}
-            <button 
+              <button 
               className={`btn rounded-pill px-3 fw-bold d-flex align-items-center gap-2 ${
                 theme === "light" ? "btn-outline-dark shadow-sm" : "btn-outline-info"
               }`} 
