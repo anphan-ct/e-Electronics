@@ -23,14 +23,25 @@ function ProductCard({ product }) {
   }
 
   return (
-    <div className="col-lg-3 col-md-4 col-sm-6 mb-4">
-      <div className={`card h-100 auth-modal-content product-card-hover transition-all ${
+    // FIX: Đã sửa lại class cột để đồng bộ với layout Shop/Search
+    <div className="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
+      {/* THÊM VIỀN ĐẬM: Dùng border-2 và shadow để nổi bật hơn ở cả 2 chế độ */}
+      <div className={`card h-100 auth-modal-content product-card-hover transition-all border border-2 ${
         theme === "dark" 
-          ? "bg-dark text-light border border-secondary shadow-sm" 
-          : "bg-white text-dark border border-light-subtle shadow-sm"
+          ? "bg-dark text-light border-secondary shadow" 
+          : "bg-white text-dark border-light-subtle shadow"
       }`}>
         
-        <div className={`p-3 ${theme === "dark" ? "" : "bg-light-subtle"} rounded-top-5`}>
+        <div className={`p-3 position-relative ${theme === "dark" ? "" : "bg-light-subtle"} rounded-top-5`}>
+          
+          {/* BADGE THÔNG MINH: Đưa lên góc trên bên trái của ảnh */}
+          <span 
+            className="position-absolute top-0 start-0 m-4 badge rounded-pill bg-danger shadow-sm px-3 py-2 fw-bold" 
+            style={{ fontSize: '0.65rem', zIndex: 2, letterSpacing: '0.5px' }}
+          >
+            NEW RELEASE
+          </span>
+
           {/* Bao bọc phần ảnh bằng Link để có thể nhấn vào */}
           <Link to={`/product/${product.id}`} className="text-decoration-none">
             <div className="overflow-hidden rounded-4">
@@ -44,30 +55,32 @@ function ProductCard({ product }) {
           </Link>
         </div>
 
-        <div className="card-body text-center pt-3">
-          <h5 className="card-title fw-bold fs-6 mb-2 text-truncate">{product.name}</h5>
+        {/* NỘI DUNG: Đã xóa badge cũ ở đây */}
+        <div className="card-body text-center pt-3 d-flex flex-column">
+          <Link to={`/product/${product.id}`} className="text-decoration-none">
+             <h5 className={`card-title fw-bold fs-6 mb-3 text-truncate ${theme === 'dark' ? 'text-light' : 'text-dark'}`}>{product.name}</h5>
+          </Link>
           
-          <span className="badge rounded-pill bg-primary-subtle text-primary mb-2 px-3" style={{ fontSize: '10px' }}>
-            NEW RELEASE
-          </span>
+          {/* Đẩy giá và nút xuống đáy card */}
+          <div className="mt-auto">
+              <p className="text-primary fw-bold fs-5 mb-3">${product.price}</p>
 
-          <p className="text-primary fw-bold fs-5 mb-3">${product.price}</p>
-
-          <div className="d-flex justify-content-center gap-2">
-            <button
-              className="btn btn-primary btn-sm rounded-pill px-3 fw-bold shadow-sm"
-              onClick={handleAddToCart}
-            >
-              Add to Cart
-            </button>
-            <Link
-              to={`/product/${product.id}`}
-              className={`btn btn-sm rounded-pill px-3 fw-semibold ${
-                theme === 'dark' ? 'btn-outline-light' : 'btn-outline-dark'
-              }`}
-            >
-              Details
-            </Link>
+              <div className="d-flex justify-content-center gap-2">
+                <button
+                  className="btn btn-primary btn-sm rounded-pill px-3 fw-bold shadow-sm"
+                  onClick={handleAddToCart}
+                >
+                  Add to Cart
+                </button>
+                <Link
+                  to={`/product/${product.id}`}
+                  className={`btn btn-sm rounded-pill px-3 fw-semibold ${
+                    theme === 'dark' ? 'btn-outline-light' : 'btn-outline-dark'
+                  }`}
+                >
+                  Details
+                </Link>
+              </div>
           </div>
         </div>
       </div>

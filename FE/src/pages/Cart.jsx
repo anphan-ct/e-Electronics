@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useEffect, useLayoutEffect } from "react";
 import { CartContext } from "../context/CartContext";
 import { ThemeContext } from "../context/ThemeContext";
 import { Link } from "react-router-dom";
@@ -6,6 +6,25 @@ import { Link } from "react-router-dom";
 function Cart() {
   const { cart, removeFromCart, clearCart, updateQuantity } = useContext(CartContext);
   const { theme } = useContext(ThemeContext);
+
+  // --- LƯU VỊ TRÍ CUỘN CHUỘT ---
+  useEffect(() => {
+    const handleScroll = () => {
+      sessionStorage.setItem('cart_scroll_pos', window.scrollY.toString());
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // --- PHỤC HỒI VỊ TRÍ CUỘN ---
+  useLayoutEffect(() => {
+    const savedScrollPos = sessionStorage.getItem('cart_scroll_pos');
+    if (savedScrollPos && cart.length > 0) {
+      setTimeout(() => {
+        window.scrollTo(0, parseInt(savedScrollPos));
+      }, 50); // Dữ liệu cart tải nhanh hơn API nên timeout có thể để ngắn (50ms)
+    }
+  }, [cart.length]);
 
   // Tính tổng tiền dựa trên giá và số lượng
   const total = cart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
@@ -28,7 +47,6 @@ function Cart() {
         <div className="row g-5">
           {/* CỘT TRÁI: DANH SÁCH SẢN PHẨM */}
           <div className="col-lg-8">
-            {/* THAY ĐỔI: Thêm border cho cả 2 chế độ ở đây */}
             <div className={`shadow-sm auth-modal-content overflow-hidden border ${
               theme === "dark" ? "bg-dark border-secondary" : "bg-white border-light-subtle"
             }`}>
@@ -39,7 +57,7 @@ function Cart() {
                     <tr className={theme === "dark" ? "border-secondary" : ""}>
                       <th className="border-0 ps-4 py-4">SẢN PHẨM</th>
                       <th className="border-0 text-center">SỐ LƯỢNG</th>
-                      <th className="border-0">GIÁ TỔNG</th>
+                      <th className="border-0">GIÁ</th>
                       <th className="border-0 text-center pe-4">XÓA</th>
                     </tr>
                   </thead>
@@ -48,10 +66,15 @@ function Cart() {
                       <tr key={item.id} className={theme === "dark" ? "border-secondary" : "border-light"}>
                         <td className="ps-4 py-4">
                           <div className="d-flex align-items-center">
-                            <div className={`${theme === "dark" ? "bg-secondary" : "bg-light"} rounded-3 me-3 d-flex align-items-center justify-content-center shadow-sm`} style={{ width: "55px", height: "55px", fontSize: "1.3rem" }}>
-                              📦
-                            </div>
-                            <span className="fw-bold fs-6">{item.name}</span>
+                            {/* Bọc ảnh bằng Link để có thể nhấn vào xem Detail */}
+                            <Link to={`/product/${item.id}`} className="text-decoration-none">
+                                <div className={`${theme === "dark" ? "bg-secondary" : "bg-light"} rounded-3 me-3 d-flex align-items-center justify-content-center shadow-sm overflow-hidden`} style={{ width: "55px", height: "55px", fontSize: "1.3rem" }}>
+                                  {item.image ? <img src={`/assets/img/${item.image}`} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '📦'}
+                                </div>
+                            </Link>
+                            <Link to={`/product/${item.id}`} className={`text-decoration-none ${theme === "dark" ? "text-light" : "text-dark"}`}>
+                                <span className="fw-bold fs-6">{item.name}</span>
+                            </Link>
                           </div>
                         </td>
                         <td className="text-center">
@@ -69,7 +92,7 @@ function Cart() {
                             >+</button>
                           </div>
                         </td>
-                        <td className="fw-bold text-primary fs-5">${(item.price * (item.quantity || 1)).toFixed(2)}</td>
+                        <td className="fw-bold text-primary fs-5">${item.price}</td>
                         <td className="text-center pe-4">
                           <button className="btn btn-link text-danger p-0 text-decoration-none transition-all hover-scale" onClick={() => removeFromCart(item.id)}>
                             <span className="fs-5">🗑️</span>

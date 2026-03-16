@@ -1,161 +1,234 @@
-// FE/src/components/ChatBox.jsx
-import { useState, useEffect, useContext, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import { io } from "socket.io-client";
 import axios from "axios";
+import { useLocation } from "react-router-dom";
 import { ThemeContext } from "../context/ThemeContext";
+import { Bot, Send, Headset, X, Trash2 } from "lucide-react";
 import { toast } from "react-toastify";
 
-const socket = io("http://localhost:5000", { transports: ["websocket"] });
+const socket = io("http://localhost:5000");
 
 function ChatBox() {
   const { theme } = useContext(ThemeContext);
+  const location = useLocation();
+  const socketRef = useRef(socket);
+  const scrollRef = useRef();
+
   const [isOpen, setIsOpen] = useState(false);
-  const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState([]);
-  const [user, setUser] = useState(null);
-  const scrollRef = useRef(null);
+  const [isAiMode, setIsAiMode] = useState(true);
+  const [adminMessages, setAdminMessages] = useState([]);
+  const [aiMessages, setAiMessages] = useState([]);
+  const [input, setInput] = useState("");
 
-  const loadUser = () => { setUser(JSON.parse(localStorage.getItem("user"))); };
+  const user = JSON.parse(localStorage.getItem("user"));
 
-  // FIX LỖI INVALID DATE: Kiểm tra nếu là chuỗi đã format thì giữ nguyên
-  const formatTime = (dateInput) => {
-    if (!dateInput) return "";
-    // Nếu dateInput đã là chuỗi format AM/PM thì không format lại nữa
-    if (typeof dateInput === 'string' && (dateInput.includes('AM') || dateInput.includes('PM'))) {
-      return dateInput;
-    }
-    const date = new Date(dateInput);
-    // Kiểm tra tính hợp lệ của Date object
-    return isNaN(date.getTime()) ? "" : date.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: true,
-    });
-  };
+  // 1. Tải lịch sử Chat (Cả AI và Admin)
+  useEffect(() => {
+
+    if (!user) return;
+
+    axios
+      .get(`http://localhost:5000/api/ai/history/${user.id}`)
+      .then(res => setAiMessages(res.data))
+      .catch(() => setAiMessages([]));
+
+  }, [user?.id]);
 
   useEffect(() => {
-    loadUser();
-    window.addEventListener("login", loadUser);
-    
-    socket.on("receive_message", (data) => setMessages(prev => [...prev, data]));
-    
-    socket.on("message_deleted", (data) => {
-      const currentUser = JSON.parse(localStorage.getItem("user"));
-      if (currentUser && String(data.room) === String(currentUser.id)) {
-        setMessages(prev => prev.filter(m => String(m.id) !== String(data.messageId)));
+
+    if (!user) return;
+
+    const token = localStorage.getItem("token");
+
+    axios
+      .get(`http://localhost:5000/api/messages/history/${user.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      .then(res => setAdminMessages(res.data))
+      .catch(() => setAdminMessages([]));
+
+  }, [user?.id]);
+
+  // 2. Nhận tin nhắn Real-time
+  useEffect(() => {
+    if (user?.id) socketRef.current.emit("join_room", user.id);
+
+    const handleReceive = (msg) => {
+
+      if (String(msg.senderId) === "0") {
+        setAiMessages(prev => [...prev, msg]);
+      } else {
+        setAdminMessages(prev => [...prev, msg]);
       }
-    });
+    };
 
-    return () => { socket.off("receive_message"); socket.off("message_deleted"); };
-  }, []);
+    const handleDeleted = ({ messageId }) => {
+      const id = parseInt(messageId);
+      setAdminMessages(prev => prev.filter(m => m.id !== id));
+      setAiMessages(prev => prev.filter(m => m.id !== id));
+    };
 
-  useEffect(() => {
-    if (user && user.role !== "admin") {
-      socket.emit("join_room", String(user.id));
-      axios.get(`http://localhost:5000/api/messages/history/${user.id}`, {
-        headers: { Authorization: localStorage.getItem("token") }
-      }).then(res => setMessages(res.data));
-    }
+    socketRef.current.on("receive_message", handleReceive);
+    socketRef.current.on("message_deleted", handleDeleted);
+
+    return () => {
+      socketRef.current.off("receive_message", handleReceive);
+      socketRef.current.off("message_deleted", handleDeleted);
+    };
   }, [user?.id]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [messages, isOpen]);
+  }, [adminMessages, aiMessages, isAiMode, isOpen]);
 
-  const sendMessage = () => {
-    if (!message.trim() || !user) return;
-    const data = {
-      room: String(user.id),
-      text: message,
-      senderId: user.id,
-      senderName: user.name,
-      senderRole: user.role,
-      time: formatTime(new Date()) // Gửi thời gian đã format chuẩn HH:MM:SS AM/PM
-    };
-    socket.emit("send_message", data);
-    setMessage("");
-  };
-
-  const handleDelete = async (id) => {
+  const handleDeleteMessage = async (id) => {
     if (!window.confirm("Xóa tin nhắn này?")) return;
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`http://localhost:5000/api/messages/delete/${id}`, { headers: { Authorization: token } });
-      setMessages(prev => prev.filter(m => String(m.id) !== String(id)));
-      socket.emit("delete_message", { room: String(user.id), messageId: id });
-      toast.success("Đã xóa!");
-    } catch (err) { toast.error("Lỗi xóa"); }
+      await axios.delete(`http://localhost:5000/api/messages/delete/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Xóa tin nhắn thành công!");
+    } catch (err) {
+      toast.error("Không thể xóa tin nhắn.");
+    }
   };
 
-  if (!user || user?.role === "admin") return null;
+  const sendMessage = async (e) => {
+
+    e.preventDefault();
+
+    if (!input.trim() || !user) return;
+
+    const text = input;
+
+    setInput("");
+
+    // ================= AI CHAT =================
+    if (isAiMode) {
+
+      const userMsg = {
+        senderId: user.id,
+        text: text,
+        time: new Date()
+      };
+
+      // hiển thị message user ngay
+      setAiMessages(prev => [...prev, userMsg]);
+
+      try {
+
+        const res = await axios.post(
+          "http://localhost:5000/api/ai/chat",
+          {
+            message: text,
+            userId: user.id
+          }
+        );
+
+        const aiMsg = {
+          senderId: 0,
+          text: res.data.reply,
+          time: new Date()
+        };
+
+        setAiMessages(prev => [...prev, aiMsg]);
+
+      } catch (err) {
+
+        setAiMessages(prev => [
+          ...prev,
+          { senderId: 0, text: "AI hiện đang bận." }
+        ]);
+
+      }
+
+    }
+
+    // ================= ADMIN CHAT =================
+    else {
+
+      socketRef.current.emit("send_message", {
+        room: user.id,
+        text: text,
+        senderId: user.id
+      });
+
+    }
+
+  };
+
+  // QUY TẮC HOOK: Không return sớm trước khi gọi hết useEffect
+  if (location.pathname === "/admin/chat") return null;
+
+  const displayMessages = isAiMode ? aiMessages : adminMessages;
 
   return (
-    <>
-      <button className="btn btn-primary position-fixed shadow-lg d-flex align-items-center justify-content-center" 
-              style={{ bottom: "25px", right: "25px", borderRadius: "50%", width: "60px", height: "60px", zIndex: 9999 }} 
-              onClick={() => setIsOpen(!isOpen)}>
-        {isOpen ? "✖" : "💬"}
-      </button>
-
+    <div className="fixed-bottom d-flex flex-column align-items-end p-4" style={{ zIndex: 1050, right: 0 }}>
       {isOpen && (
-        <div className={`card position-fixed shadow-lg border-0 auth-modal-content ${theme === "dark" ? "bg-dark text-light" : "bg-white text-dark"}`} 
-             style={{ width: "360px", height: "500px", bottom: "100px", right: "25px", zIndex: 10000, borderRadius: "25px", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+        <div className={`card shadow-2xl mb-3 border-0 transition-all ${theme === "dark" ? "bg-dark shadow-dark" : "bg-white shadow-light"}`}
+             style={{ width: "380px", borderRadius: "25px", overflow: "hidden", animation: "slideUp 0.3s ease-out" }}>
           
-          <div className="p-3 text-white" style={{ background: "linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%)" }}>
-            <div className="d-flex align-items-center">
-              <div className="bg-white rounded-circle me-3 d-flex align-items-center justify-content-center shadow-sm" style={{ width: "40px", height: "40px" }}>
-                <span className="text-primary fw-bold">🛒</span>
-              </div>
-              <div>
-                <h6 className="mb-0 fw-bold">Hỗ trợ trực tuyến</h6>
-                <small style={{ opacity: 0.8 }}>Chào {user.name}!</small>
-              </div>
+          <div className="btn-auth-gradient p-4 d-flex justify-content-between align-items-center text-white">
+            <div className="d-flex align-items-center gap-3">
+              {isAiMode ? <Bot size={22} /> : <Headset size={22} />}
+              <h6 className="mb-0 fw-bold">{isAiMode ? "Trợ lý ảo AI" : "Tư vấn viên"}</h6>
             </div>
+            <button className="btn btn-sm btn-light rounded-pill px-3 fw-bold shadow-sm" onClick={() => setIsAiMode(!isAiMode)}>
+              {isAiMode ? "Gặp Admin" : "Dùng AI"}
+            </button>
           </div>
 
-          <div ref={scrollRef} className="card-body overflow-auto p-3 flex-grow-1 chat-scrollbar" 
-               style={{ background: theme === "dark" ? "#121212" : "#f4f7f6" }}>
-            {messages.map((m, i) => {
-              const isMe = String(m.senderName) === String(user.name);
-              const displayTime = formatTime(m.time || m.created_at);
+          <div ref={scrollRef} className="card-body overflow-auto p-4 d-flex flex-column custom-scrollbar" style={{ height: "420px", backgroundColor: theme === "dark" ? "#1a1d21" : "#f8faff" }}>
+            {displayMessages.map((msg, index) => {
+              const isMe = String(msg.senderId) === String(user?.id);
+              const msgId = msg.id || msg._id;
 
               return (
-                <div key={m.id || i} className={`d-flex mb-4 ${isMe ? "justify-content-end" : "justify-content-start"}`}>
-                  <div className="position-relative chat-bubble-wrapper" style={{ maxWidth: "80%" }}>
-                    {isMe && <button className="btn-delete-msg-client" onClick={() => handleDelete(m.id)}>×</button>}
+                <div key={index} className={`d-flex flex-column mb-4 chat-bubble-wrapper ${isMe ? "align-items-end" : "align-items-start"}`}>
+                  <small className={`mb-1 px-2 fw-bold ${theme === 'dark' ? 'text-light' : 'text-dark'}`} style={{ fontSize: "0.85rem", opacity: 0.9 }}>
+                    {isMe ? "Bạn" : (String(msg.senderId) === "0" ? "AI Assistant" : "Admin")}
+                  </small>
 
-                    {/* BONG BÓNG CHAT CHỨA NHÃN TÊN Ở TRONG */}
-                    <div className={`p-2 px-3 rounded-4 shadow-sm ${isMe ? "bg-primary text-white" : (theme === "dark" ? "bg-secondary text-white border-0" : "bg-white border text-dark")}`}
-                         style={{ borderRadius: isMe ? "18px 18px 0 18px" : "18px 18px 18px 0" }}>
-                      <div className="fw-bold mb-1" style={{ fontSize: "11px", opacity: 0.8 }}>
-                        {isMe ? "Bạn" : "Admin"}
+                  <div className={`d-flex align-items-center w-100 ${isMe ? "flex-row-reverse" : "flex-row"}`}>
+                    <div className={`px-3 py-2 shadow-sm ${isMe ? "btn-auth-gradient text-white rounded-start-4 rounded-bottom-4" : (theme === "dark" ? "bg-secondary text-light" : "bg-white text-dark border") + " rounded-end-4 rounded-bottom-4"}`}
+                         style={{ maxWidth: "80%", fontSize: "0.95rem" }}>
+                      <div style={{ whiteSpace: "pre-wrap" }}>{msg.text || msg.message_text}</div>
+                    </div>
+
+                    {isMe && msgId && (
+                      <div className="delete-btn-container">
+                        <button onClick={() => handleDeleteMessage(msgId)} className="btn-delete-msg border-0 bg-transparent">
+                          <Trash2 size={16} />
+                        </button>
                       </div>
-                      <div style={{ fontSize: "14px", wordBreak: "break-word" }}>{m.text || m.message_text}</div>
-                    </div>
-
-                    {/* THỜI GIAN NẰM NGOÀI BONG BÓNG CHUẨN ĐÉT */}
-                    <div style={{ fontSize: "10px", marginTop: "4px", textAlign: isMe ? "right" : "left", opacity: 0.5, color: theme === "dark" ? "#ccc" : "#666" }}>
-                      {displayTime}
-                    </div>
+                    )}
                   </div>
+                  
+                  <small className="mt-1 px-2 opacity-50" style={{ fontSize: "0.75rem" }}>
+                    {msg.time ? new Date(msg.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                  </small>
                 </div>
               );
             })}
           </div>
 
-          <div className={`p-3 border-top ${theme === "dark" ? "bg-dark border-secondary" : "bg-white"}`}>
-            <div className="input-group align-items-center">
-              <input className={`form-control border-0 px-3 py-2 text-dark ${theme === "dark" ? "bg-light" : "bg-light"}`} 
-                     placeholder="Hỏi gì đó..." value={message} onChange={(e) => setMessage(e.target.value)}
-                     onKeyDown={(e) => e.key === "Enter" && sendMessage()} style={{ borderRadius: "25px", fontSize: "14px" }} />
-              <button className="btn btn-primary ms-2 rounded-circle d-flex align-items-center justify-content-center shadow-sm" 
-                      onClick={sendMessage} style={{ width: "35px", height: "35px" }}>➤</button>
+          <form onSubmit={sendMessage} className={`card-footer p-3 border-0 ${theme === "dark" ? "bg-dark" : "bg-white"}`}>
+            <div className={`d-flex align-items-center rounded-pill p-2 border ${theme === "dark" ? "bg-secondary border-secondary" : "bg-light"}`}>
+              <input className={`form-control border-0 bg-transparent ps-3 shadow-none ${theme === 'dark' ? 'text-white' : ''}`} placeholder="Aa..." value={input} onChange={(e) => setInput(e.target.value)} />
+              <button className="btn btn-primary rounded-circle d-flex align-items-center justify-content-center p-0" type="submit" style={{ width: "40px", height: "40px", background: "linear-gradient(135deg, #21d4fd 0%, #b721ff 100%)", border: 'none' }}>
+                <Send size={18} color="white" />
+              </button>
             </div>
-          </div>
+          </form>
         </div>
       )}
-    </>
+
+      <button className="btn btn-auth-gradient rounded-circle shadow-lg d-flex align-items-center justify-content-center transition-all hover-lift"
+              onClick={() => setIsOpen(!isOpen)} style={{ width: "65px", height: "65px", border: "none", zIndex: 1100 }}>
+        {isOpen ? <X size={30} color="white" /> : (isAiMode ? <Bot size={32} color="white" /> : <Headset size={32} color="white" />)}
+      </button>
+    </div>
   );
 }
 

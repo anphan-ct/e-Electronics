@@ -3,10 +3,12 @@ import { useContext, useState, useEffect } from "react";
 import { CartContext } from "../context/CartContext";
 import { ThemeContext } from "../context/ThemeContext";
 import { toast } from "react-toastify";
+import { Search } from 'lucide-react';
 
 function Header() {
   const { cart } = useContext(CartContext);
   const { theme, toggleTheme } = useContext(ThemeContext);
+  const [keyword, setKeyword] = useState('');
   const location = useLocation();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -52,6 +54,14 @@ function Header() {
     }, 1500);
   };
 
+  const handleSearch = (e) => {
+        e.preventDefault();
+        if (keyword.trim()) {
+            // Chuyển hướng sang trang tìm kiếm kèm theo từ khóa trên URL
+            navigate(`/search?q=${encodeURIComponent(keyword.trim())}`);
+        }
+    };
+
   return (
     <>
       {/* Navbar: Tối ưu viền mảnh cho Light Mode */}
@@ -83,6 +93,25 @@ function Header() {
           <div className="d-flex align-items-center gap-2">
 
                 
+            {/* ---------- PHẦN MỚI THÊM: THANH TÌM KIẾM ---------- */}
+            <form onSubmit={handleSearch} className="d-flex position-relative d-none d-md-flex me-2" style={{ maxWidth: '250px' }}>
+              <input
+                type="text"
+                className={`form-control rounded-pill pe-5 ${theme === "dark" ? "bg-dark border-secondary text-light" : "bg-light border-light-subtle text-dark"}`}
+                placeholder="Tìm kiếm..."
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                style={{ fontSize: '0.9rem' }}
+              />
+              <button
+                type="submit"
+                className={`btn position-absolute end-0 top-50 translate-middle-y rounded-pill ${theme === "dark" ? "text-light" : "text-dark"}`}
+                style={{ border: 'none', background: 'transparent' }}
+              >
+                <Search size={18} />
+              </button>
+            </form>
+            
 
             {/* Toggle Button: Sử dụng outline-dark cho Light Mode để rõ nét hơn */}
               <button 

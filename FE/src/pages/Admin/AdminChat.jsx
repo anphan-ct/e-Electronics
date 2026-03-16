@@ -3,6 +3,7 @@ import { io } from "socket.io-client";
 import axios from "axios";
 import { ThemeContext } from "../../context/ThemeContext";
 import { toast } from "react-toastify";
+import { Send, Trash2, LogOut, MessageSquare, User, Circle } from "lucide-react";
 
 const socket = io("http://localhost:5000", { transports: ["websocket"] });
 
@@ -15,27 +16,24 @@ function AdminChat() {
   const [targetUserName, setTargetUserName] = useState("");
   const scrollRef = useRef(null);
 
-  // LOGIC GIỮ NGUYÊN
+  const admin = JSON.parse(localStorage.getItem("user"));
+
   const formatTime = (dateInput) => {
     if (!dateInput) return "";
     if (typeof dateInput === 'string' && (dateInput.includes('AM') || dateInput.includes('PM'))) return dateInput;
     const date = new Date(dateInput);
-    return isNaN(date.getTime()) ? "" : date.toLocaleTimeString("en-US", {
-      hour: "2-digit", minute: "2-digit", hour12: true,
-    });
+    return isNaN(date.getTime()) ? "" : date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
   };
 
-  const scrollToBottom = () => {
-    if (scrollRef.current) scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  };
-
-  useEffect(() => { scrollToBottom(); }, [messages]);
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [messages]);
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get("http://localhost:5000/api/auth/users", { headers: { Authorization: token } });
+        const res = await axios.get("http://localhost:5000/api/auth/users", { headers: { Authorization: `Bearer ${token}` } });
         setUsers(res.data.map(u => ({ ...u, unread: false })));
       } catch (err) { console.error("Lỗi lấy user", err); }
     };
@@ -43,42 +41,38 @@ function AdminChat() {
   }, []);
 
   useEffect(() => {
-    if (targetUserId) {
-      const fetchHistory = async () => {
-        try {
-          const token = localStorage.getItem("token");
-          const res = await axios.get(`http://localhost:5000/api/messages/history/${targetUserId}`, { headers: { Authorization: token } });
-          setMessages(res.data);
-        } catch (err) { toast.error("Không thể tải lịch sử chat"); }
-      };
-      fetchHistory();
-      socket.emit("join_room", String(targetUserId));
-      setUsers(prev => prev.map(u => u.id === targetUserId ? { ...u, unread: false } : u));
-    }
+    if (!targetUserId) return;
+    const fetchHistory = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get(`http://localhost:5000/api/messages/history/${targetUserId}`, { headers: { Authorization: `Bearer ${token}` } });
+        setMessages(res.data);
+      } catch (err) { toast.error("Không thể tải lịch sử chat"); }
+    };
+    fetchHistory();
+    socket.emit("join_room", String(targetUserId));
+    setUsers(prev => prev.map(u => u.id === targetUserId ? { ...u, unread: false } : u));
+  }, [targetUserId]);
 
-    socket.on("receive_message", (data) => {
-      if (String(targetUserId) === String(data.room)) setMessages(prev => [...prev, data]);
+  useEffect(() => {
+    const handleReceive = (data) => {
+      if (String(targetUserId) === String(data.room)) { setMessages(prev => [...prev, data]); }
       else setUsers(prev => prev.map(u => String(u.id) === String(data.room) ? { ...u, unread: true } : u));
-    });
-
-    socket.on("message_deleted", (data) => {
+    };
+    const handleDelete = (data) => {
       setMessages(prev => prev.filter(m => String(m.id) !== String(data.messageId)));
-    });
-
-    return () => { socket.off("receive_message"); socket.off("message_deleted"); };
+    };
+    socket.on("receive_message", handleReceive);
+    socket.on("message_deleted", handleDelete);
+    return () => {
+      socket.off("receive_message", handleReceive);
+      socket.off("message_deleted", handleDelete);
+    };
   }, [targetUserId]);
 
   const sendReply = () => {
     if (!text.trim() || !targetUserId) return;
-    const admin = JSON.parse(localStorage.getItem("user"));
-    const data = {
-      room: String(targetUserId),
-      text: text,
-      senderId: admin.id,
-      senderName: "Admin",
-      senderRole: "admin",
-      time: formatTime(new Date()) 
-    };
+    const data = { room: String(targetUserId), text: text, senderId: admin.id, senderName: "Admin", senderRole: "admin", time: new Date() };
     socket.emit("send_message", data);
     setText("");
   };
@@ -87,138 +81,82 @@ function AdminChat() {
     if (!window.confirm("Xóa tin nhắn này?")) return;
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`http://localhost:5000/api/messages/delete/${id}`, { headers: { Authorization: token } });
+      await axios.delete(`http://localhost:5000/api/messages/delete/${id}`, { headers: { Authorization: `Bearer ${token}` } });
       setMessages(prev => prev.filter(m => String(m.id) !== String(id)));
       socket.emit("delete_message", { room: String(targetUserId), messageId: id });
+      toast.success("Đã xóa tin nhắn!"); // Hiển thị thông báo xóa thành công
     } catch (err) { toast.error("Lỗi xóa tin nhắn"); }
   };
 
-  // --- PHẦN THAY ĐỔI GIAO DIỆN ---
-  return (
-    <div className={`container-fluid p-0 overflow-hidden ${theme === "dark" ? "bg-dark text-light" : "bg-light"}`} 
-         style={{ height: "calc(100vh - 72px)" }}>
-      <div className="row g-0 h-100">
-        
-        {/* Sidebar */}
-        <div className={`col-md-3 d-flex flex-column border-end ${theme === "dark" ? "bg-dark border-secondary" : "bg-white border-light"}`}>
-          <div className="p-4 border-bottom">
-            <h5 className="fw-bold mb-0 d-flex align-items-center">
-              <span className="text-primary me-2">●</span> Hội thoại
-            </h5>
-          </div>
-          
-          <div className="flex-grow-1 overflow-auto chat-scrollbar">
-            {users.length > 0 ? users.map(u => (
-              <div key={u.id} 
-                className={`p-3 d-flex align-items-center cursor-pointer transition-all mx-2 my-1 rounded-3 ${
-                  targetUserId === u.id 
-                  ? (theme === "dark" ? "bg-primary text-white" : "bg-primary-subtle border-start border-primary border-4") 
-                  : (theme === "dark" ? "hover-dark" : "hover-light")
-                }`} 
-                onClick={() => { setTargetUserId(u.id); setTargetUserName(u.name); }}
-                style={{ cursor: "pointer" }}>
-                
-                <div className="position-relative">
-                  <div className={`rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm ${targetUserId === u.id ? "bg-white text-primary" : "bg-primary text-white"}`} 
-                       style={{ width: "45px", height: "45px", fontSize: "1.2rem" }}>
-                    {u.name.charAt(0).toUpperCase()}
-                  </div>
-                  {u.unread && (
-                    <span className="position-absolute top-0 start-100 translate-middle p-2 bg-danger border border-light rounded-circle"></span>
-                  )}
-                </div>
+  if (!admin || admin.role !== 'admin') return <div className="p-5 text-center">Truy cập bị từ chối</div>;
 
+  return (
+    <div className={`container-fluid p-0 overflow-hidden ${theme === "dark" ? "bg-dark text-light" : "bg-white"}`} style={{ height: "calc(100vh - 72px)" }}>
+      <div className="row g-0 h-100">
+        {/* Sidebar */}
+        <div className={`col-md-3 d-flex flex-column border-end ${theme === "dark" ? "bg-dark border-secondary" : "bg-light border-light-subtle"}`}>
+          <div className="p-4 border-bottom d-flex align-items-center gap-2">
+            <MessageSquare className="text-primary" size={24} />
+            <h5 className="fw-bold mb-0">Hội thoại</h5>
+          </div>
+          <div className="flex-grow-1 overflow-auto custom-scrollbar p-2">
+            {users.map(u => (
+              <div key={u.id} className={`p-3 d-flex align-items-center cursor-pointer rounded-4 mb-2 transition-all ${targetUserId === u.id ? "btn-auth-gradient text-white shadow" : (theme === "dark" ? "hover-dark" : "bg-white border hover-light")}`} onClick={() => { setTargetUserId(u.id); setTargetUserName(u.name); }}>
+                <div className="position-relative">
+                  <div className={`rounded-circle d-flex align-items-center justify-content-center fw-bold ${targetUserId === u.id ? "bg-white text-primary" : "bg-primary text-white"}`} style={{ width: "48px", height: "48px" }}>{u.name.charAt(0).toUpperCase()}</div>
+                  {u.unread && <span className="position-absolute top-0 start-100 translate-middle p-2 bg-danger border border-2 border-white rounded-circle"></span>}
+                </div>
                 <div className="ms-3 flex-grow-1 overflow-hidden">
-                  <div className="d-flex justify-content-between">
-                    <h6 className={`mb-0 text-truncate fw-bold ${targetUserId === u.id && theme !== "dark" ? "text-primary" : ""}`}>
-                      {u.name}
-                    </h6>
-                  </div>
-                  <small className={`text-truncate d-block opacity-75 ${targetUserId === u.id ? "" : "text-muted"}`}>
-                    Sẵn sàng hỗ trợ...
-                  </small>
+                  <h6 className="mb-0 text-truncate fw-bold">{u.name}</h6>
+                  <small className={targetUserId === u.id ? "text-white-50" : "text-muted"}>Sẵn sàng hỗ trợ...</small>
                 </div>
               </div>
-            )) : <div className="p-4 text-center text-muted">Chưa có người dùng</div>}
+            ))}
           </div>
         </div>
 
         {/* Chat Area */}
-        <div className="col-md-9 d-flex flex-column h-100">
+        <div className="col-md-9 d-flex flex-column h-100 shadow-sm" style={{ backgroundColor: theme === 'dark' ? '#1a1d21' : '#f8faff' }}>
           {targetUserId ? (
             <>
-              {/* Chat Header */}
               <div className={`p-3 border-bottom d-flex align-items-center justify-content-between ${theme === "dark" ? "bg-dark border-secondary" : "bg-white shadow-sm"}`}>
-                <div className="d-flex align-items-center">
-                  <div className="bg-success rounded-circle me-2 pulse-animation" style={{ width: "10px", height: "10px" }}></div>
-                  <span className="opacity-75">Đang trò chuyện với: </span>
-                  <strong className="text-primary ms-2 fs-5">{targetUserName}</strong>
+                <div className="d-flex align-items-center gap-3 ps-2">
+                  <div className="position-relative"><User size={28} className="text-primary" /><Circle size={10} fill="#22c55e" className="text-success position-absolute bottom-0 end-0" /></div>
+                  <div><h6 className="mb-0 fw-bold">{targetUserName}</h6><small className="text-muted">Đang trực tuyến</small></div>
                 </div>
-                <button className="btn btn-outline-danger btn-sm rounded-pill px-3" onClick={() => setTargetUserId(null)}>Đóng chat</button>
+                <button className="btn btn-outline-danger btn-sm rounded-pill px-4 border-0 d-flex align-items-center gap-2" onClick={() => setTargetUserId(null)}><LogOut size={16} /> Thoát</button>
               </div>
 
-              {/* Messages Body */}
-              <div ref={scrollRef} className="flex-grow-1 overflow-y-auto p-4 chat-scrollbar" 
-                   style={{ background: theme === "dark" ? "#121212" : "#f8f9fa" }}>
+              <div ref={scrollRef} className="flex-grow-1 overflow-y-auto p-4 custom-scrollbar">
                 {messages.map((m, i) => {
-                  const isAdmin = m.senderRole === "admin";
-                  const displayTime = formatTime(m.time || m.created_at);
-
+                  const isAdminMsg = m.senderRole === "admin" || String(m.senderId) === String(admin.id);
                   return (
-                    <div key={i} className={`mb-3 d-flex ${isAdmin ? "justify-content-end" : "justify-content-start"}`}>
-                      <div className={`position-relative d-flex align-items-end ${isAdmin ? "flex-row-reverse" : ""}`}>
-                        
-                        {/* Avatar nhỏ cho user */}
-                        {!isAdmin && (
-                          <div className="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-2 mb-2" 
-                               style={{ width: "28px", height: "28px", fontSize: "10px" }}>{targetUserName.charAt(0)}</div>
-                        )}
-
-                        <div className="message-container">
-                          <div className={`p-3 shadow-sm transition-all bubble-hover ${
-                              isAdmin 
-                              ? "bg-primary text-white rounded-4 rounded-bottom-right-0" 
-                              : (theme === "dark" ? "bg-secondary text-light rounded-4 rounded-bottom-left-0" : "bg-white text-dark border rounded-4 rounded-bottom-left-0")
-                            }`}
-                            style={{ maxWidth: "500px" }}>
-                            <div className="fw-bold mb-1 d-flex justify-content-between align-items-center" style={{ fontSize: "11px", opacity: 0.7 }}>
-                              <span>{isAdmin ? "QUẢN TRỊ VIÊN" : "KHÁCH HÀNG"}</span>
-                              {isAdmin && (
-                                <i className="bi bi-trash cursor-pointer ms-3 hover-text-danger" 
-                                   onClick={() => deleteMsg(m.id)} 
-                                   style={{ fontSize: "12px", cursor: "pointer" }}>🗑️</i>
-                              )}
-                            </div>
-                            <div className="fs-6" style={{ wordBreak: "break-word", lineHeight: "1.5" }}>{m.text || m.message_text}</div>
-                          </div>
-                          <div className={`mt-1 opacity-50 ${isAdmin ? "text-end" : "text-start"}`} style={{ fontSize: "10px" }}>{displayTime}</div>
+                    <div key={i} className={`d-flex flex-column mb-4 chat-msg-item ${isAdminMsg ? "align-items-end" : "align-items-start"}`}>
+                      <small className="mb-1 px-2 fw-bold opacity-75 text-uppercase" style={{ fontSize: '10px' }}>{isAdminMsg ? "Quản trị viên" : "Khách hàng"}</small>
+                      <div className={`d-flex align-items-center gap-2 ${isAdminMsg ? "flex-row-reverse" : "flex-row"}`}>
+                        <div className={`p-3 shadow-sm rounded-4 ${isAdminMsg ? "btn-auth-gradient text-white rounded-bottom-right-0" : (theme === "dark" ? "bg-secondary text-light rounded-bottom-left-0" : "bg-white text-dark border rounded-bottom-left-0")}`} style={{ maxWidth: "550px" }}>
+                          <div className="fs-6" style={{ wordBreak: "break-word" }}>{m.text || m.message_text}</div>
                         </div>
+                        {/* Nút xóa sẽ ẩn theo CSS của chat-msg-item:hover */}
+                        <button onClick={() => deleteMsg(m.id)} className={`btn-admin-delete-msg border-0 bg-transparent p-1 transition-all ${theme === 'dark' ? 'text-light opacity-50' : 'text-muted'}`}>
+                          <Trash2 size={16} />
+                        </button>
                       </div>
+                      <small className="mt-1 opacity-50 px-2" style={{ fontSize: "10px" }}>{formatTime(m.time || m.created_at)}</small>
                     </div>
                   );
                 })}
               </div>
 
-              {/* Input Footer */}
-              <div className={`p-4 border-top ${theme === "dark" ? "bg-dark border-secondary" : "bg-white"}`}>
-                <div className={`d-flex align-items-center rounded-pill p-2 ${theme === "dark" ? "bg-secondary" : "bg-light border shadow-sm"}`}>
-                  <input className={`form-control border-0 bg-transparent px-4 shadow-none ${theme === "dark" ? "text-light" : "text-dark"}`} 
-                    placeholder="Nhập nội dung phản hồi cho khách hàng..." 
-                    value={text} onChange={(e) => setText(e.target.value)} 
-                    onKeyDown={(e) => e.key === "Enter" && sendReply()} 
-                  />
-                  <button className="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm" onClick={sendReply}>
-                    GỬI <i className="bi bi-send-fill ms-1"></i>
-                  </button>
+              <div className={`p-4 border-top ${theme === "dark" ? "bg-dark border-secondary" : "bg-white shadow-lg-top"}`}>
+                <div className={`d-flex align-items-center rounded-pill p-2 border ${theme === "dark" ? "bg-secondary border-secondary" : "bg-light border-light-subtle"}`}>
+                  <input className={`form-control border-0 bg-transparent px-4 shadow-none ${theme === "dark" ? "text-light" : "text-dark"}`} placeholder="Nhập phản hồi..." value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendReply()} />
+                  <button className="btn btn-primary rounded-circle d-flex align-items-center justify-content-center p-0" onClick={sendReply} style={{ width: '45px', height: '45px', background: 'linear-gradient(135deg, #21d4fd 0%, #b721ff 100%)', border: 'none' }}><Send size={20} color="white" /></button>
                 </div>
               </div>
             </>
           ) : (
-            <div className={`h-100 d-flex flex-column align-items-center justify-content-center ${theme === 'dark' ? 'opacity-25' : 'opacity-50'}`}>
-              <div className="display-1 mb-4">💬</div>
-              <h4 className="fw-bold">Hệ thống hỗ trợ trực tuyến</h4>
-              <p>Chọn một hội thoại bên trái để bắt đầu trả lời khách hàng</p>
-            </div>
+            <div className="h-100 d-flex flex-column align-items-center justify-content-center opacity-50"><div className="display-1 mb-4">💬</div><h4 className="fw-bold">Trung tâm hỗ trợ MyShop</h4><p>Chọn một hội thoại để bắt đầu</p></div>
           )}
         </div>
       </div>

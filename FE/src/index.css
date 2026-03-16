@@ -992,3 +992,151 @@ body.dark .ai-chat-footer input {
   from { transform: translateY(20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+
+/* Chế độ mặc định (Light Mode) */
+:root {
+  --bg-color: #ffffff;
+  --text-color: #333333;
+  --input-bg: #f8f9fa;
+  --input-border: #ced4da;
+}
+
+/* Chế độ tối (Dark Mode) - Giả sử bạn đang gán class 'dark-mode' cho thẻ <body> hoặc thông qua ThemeContext */
+body.dark-mode {
+  --bg-color: #121212;
+  --text-color: #e0e0e0;
+  --input-bg: #2d2d2d;
+  --input-border: #444444;
+}
+
+/* Các class áp dụng cho UI Tìm kiếm */
+.page-theme {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.search-input-theme {
+  background-color: var(--input-bg) !important;
+  color: var(--text-color) !important;
+  border-color: var(--input-border) !important;
+  transition: all 0.3s ease;
+}
+
+.search-input-theme:focus {
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+}
+
+.search-icon-theme {
+  color: var(--text-color);
+}
+
+.hover-text-light:hover { 
+    color: white !important; 
+    transform: translateX(-5px); 
+}
+
+.hover-text-dark:hover { 
+    color: black !important; 
+    transform: translateX(-5px); 
+}
+
+.transition-all { 
+    transition: all 0.3s ease; 
+}
+
+/* Bạn có thể thêm các tùy chỉnh khác cho trang Detail tại đây */
+.back-button-link {
+    background: transparent;
+}
+
+/* Container bọc tin nhắn của Khách hàng */
+/* Container bọc tin nhắn */
+.chat-bubble-wrapper {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+/* Nút xóa mặc định: Ẩn hoàn toàn giống Admin */
+.btn-delete-msg {
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease-in-out;
+  color: #adb5bd; /* Màu xám bạc trung tính */
+  background: transparent !important;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+}
+
+/* Chỉ hiện nút xóa khi di chuột vào vùng tin nhắn (Hover) */
+.chat-bubble-wrapper:hover .btn-delete-msg {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Hiệu ứng khi di chuột trực tiếp vào icon thùng rác */
+.btn-delete-msg:hover {
+  color: #ff4d4d !important; /* Đổi sang đỏ khi sẵn sàng xóa */
+  transform: scale(1.2);
+}
+
+/* Đảm bảo icon nổi bật trong Dark Mode */
+body.dark .btn-delete-msg {
+  color: #6c757d; 
+}
+
+body.dark .btn-delete-msg:hover {
+  color: #ff4d4d !important;
+}
+
+/* Khung bọc nút để giữ vị trí ổn định */
+.delete-btn-container {
+  min-width: 35px;
+  display: flex;
+  justify-content: center;
+}
+
+/* Tùy chỉnh thanh cuộn thanh mảnh hiện đại */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+body.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Container bao quanh tin nhắn admin chat */
+.chat-msg-item {
+  position: relative;
+}
+
+/* Nút xóa mặc định ẩn hoàn toàn */
+.btn-admin-delete-msg {
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+/* Chỉ hiện khi đưa chuột vào chat-msg-item */
+.chat-msg-item:hover .btn-admin-delete-msg {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Màu đỏ khi hover trực tiếp vào icon rác */
+.btn-admin-delete-msg:hover {
+  color: #ff4d4d !important;
+  transform: scale(1.1);
+}
+
+/* Đảm bảo icon nổi bật trong Dark Mode */
+body.dark .btn-admin-delete-msg {
+  color: #adb5bd; /* Màu xám bạc để thấy trên nền tối */
+}

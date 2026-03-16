@@ -9,8 +9,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Login from "./components/Login";
 import Register from "./components/Register";
-import ChatBox from "./components/ChatBox";
-import AIChatBox from "./components/AIChatBox";
+import ChatBox from "./components/ChatBox"; 
 
 // Pages
 import Home from "./pages/Home";
@@ -20,6 +19,8 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import UserProfile from "./pages/UserProfile";
 import AdminChat from "./pages/Admin/AdminChat";
+import Search from './pages/Search';
+
 
 function App() {
   // Bây giờ useContext đã được import, dòng này sẽ không còn lỗi "theme is not defined"
@@ -40,6 +41,7 @@ function App() {
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/profile" element={<UserProfile />} />
+          <Route path="/search" element={<Search />} />
 
           {/* Admin Chat */}
           <Route path="/admin/chat" element={<AdminChat />} />
@@ -53,7 +55,6 @@ function App() {
       <Login />
       <Register />
       <ChatBox />
-      <AIChatBox/>
 
       {/* THÔNG BÁO: Tự động đổi màu theo theme của MyShop */}
       <ToastContainer 

@@ -3,8 +3,9 @@ const db = require("../config/db");
 // Lấy lịch sử tin nhắn dựa trên userId
 exports.getMessagesByUserId = (req, res) => {
   const { userId } = req.params;
+  // Chuẩn hóa tên cột trả về để FE dễ map
   const sql = `
-    SELECT m.id, m.message_text as text, u.name as senderName, u.role as senderRole, m.created_at as time
+    SELECT m.id, m.message_text as text, m.sender_id as senderId, u.role as senderRole, m.created_at as time
     FROM messages m
     JOIN conversations c ON m.conversation_id = c.id
     LEFT JOIN users u ON m.sender_id = u.id

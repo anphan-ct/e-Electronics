@@ -9,9 +9,16 @@ exports.askGemini = async (message) => {
       model: "gemini-2.5-flash"
     });
 
-    const result = await model.generateContent(message);
+    const result = await model.generateContent({
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: message }]
+        }
+      ]
+    });
 
-    const response = await result.response;
+    const response = result.response;
 
     return response.text();
 
