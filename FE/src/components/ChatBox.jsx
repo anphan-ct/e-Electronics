@@ -158,17 +158,33 @@ function ChatBox() {
 
   };
 
-  // QUY TẮC HOOK: Không return sớm trước khi gọi hết useEffect
+
   if (location.pathname === "/admin/chat") return null;
 
   const displayMessages = isAiMode ? aiMessages : adminMessages;
 
   return (
-    <div className="fixed-bottom d-flex flex-column align-items-end p-4" style={{ zIndex: 1050, right: 0 }}>
+    <div 
+      className="fixed-bottom d-flex flex-column align-items-end p-4" 
+      style={{ 
+        zIndex: 1050, 
+        right: 0, 
+        left: 'auto',
+        pointerEvents: 'none',
+        width: 'fit-content'
+      }}
+    >
       {isOpen && (
-        <div className={`card shadow-2xl mb-3 border-0 transition-all ${theme === "dark" ? "bg-dark shadow-dark" : "bg-white shadow-light"}`}
-             style={{ width: "380px", borderRadius: "25px", overflow: "hidden", animation: "slideUp 0.3s ease-out" }}>
-          
+        <div 
+          className={`card shadow-2xl mb-3 border-0 transition-all ${theme === "dark" ? "bg-dark shadow-dark text-white" : "bg-white shadow-light"}`}
+          style={{ 
+            width: "380px", 
+            borderRadius: "25px", 
+            overflow: "hidden", 
+            animation: "slideUp 0.3s ease-out",
+            pointerEvents: 'auto'
+          }}
+        >
           <div className="btn-auth-gradient p-4 d-flex justify-content-between align-items-center text-white">
             <div className="d-flex align-items-center gap-3">
               {isAiMode ? <Bot size={22} /> : <Headset size={22} />}
@@ -181,17 +197,18 @@ function ChatBox() {
 
           <div ref={scrollRef} className="card-body overflow-auto p-4 d-flex flex-column custom-scrollbar" style={{ height: "420px", backgroundColor: theme === "dark" ? "#1a1d21" : "#f8faff" }}>
             {displayMessages.map((msg, index) => {
-              const isMe = String(msg.senderId) === String(user?.id);
+              const senderID = msg.senderId !== undefined ? msg.senderId : msg.sender_id;
+              const isMe = String(senderID) === String(user?.id);
               const msgId = msg.id || msg._id;
 
               return (
                 <div key={index} className={`d-flex flex-column mb-4 chat-bubble-wrapper ${isMe ? "align-items-end" : "align-items-start"}`}>
                   <small className={`mb-1 px-2 fw-bold ${theme === 'dark' ? 'text-light' : 'text-dark'}`} style={{ fontSize: "0.85rem", opacity: 0.9 }}>
-                    {isMe ? "Bạn" : (String(msg.senderId) === "0" ? "AI Assistant" : "Admin")}
+                    {isMe ? "Bạn" : (String(senderID) === "0" ? "AI Assistant" : "Admin")}
                   </small>
 
                   <div className={`d-flex align-items-center w-100 ${isMe ? "flex-row-reverse" : "flex-row"}`}>
-                    <div className={`px-3 py-2 shadow-sm ${isMe ? "btn-auth-gradient text-white rounded-start-4 rounded-bottom-4" : (theme === "dark" ? "bg-secondary text-light" : "bg-white text-dark border") + " rounded-end-4 rounded-bottom-4"}`}
+                    <div className={`px-3 py-2 shadow-sm ${isMe ? "btn-auth-gradient text-white rounded-start-4 rounded-bottom-4" : (theme === "dark" ? "bg-secondary text-light border-0" : "bg-white text-dark border") + " rounded-end-4 rounded-bottom-4"}`}
                          style={{ maxWidth: "80%", fontSize: "0.95rem" }}>
                       <div style={{ whiteSpace: "pre-wrap" }}>{msg.text || msg.message_text}</div>
                     </div>
@@ -224,8 +241,14 @@ function ChatBox() {
         </div>
       )}
 
-      <button className="btn btn-auth-gradient rounded-circle shadow-lg d-flex align-items-center justify-content-center transition-all hover-lift"
-              onClick={() => setIsOpen(!isOpen)} style={{ width: "65px", height: "65px", border: "none", zIndex: 1100 }}>
+      <button 
+        className="btn btn-auth-gradient rounded-circle shadow-lg d-flex align-items-center justify-content-center transition-all hover-lift"
+        onClick={() => setIsOpen(!isOpen)} 
+        style={{ 
+          width: "65px", height: "65px", border: "none", zIndex: 1100,
+          pointerEvents: 'auto'
+        }}
+      >
         {isOpen ? <X size={30} color="white" /> : (isAiMode ? <Bot size={32} color="white" /> : <Headset size={32} color="white" />)}
       </button>
     </div>

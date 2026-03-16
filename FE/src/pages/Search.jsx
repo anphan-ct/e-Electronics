@@ -78,23 +78,27 @@ const Search = () => {
 
         const delayDebounceFn = setTimeout(() => {
             if (keyword.trim() !== '') {
-                const cachedQuery = sessionStorage.getItem('last_search_query');
-                if (keyword !== cachedQuery) {
-                    fetchSearchResults();
-                    setCurrentPage(1);
-                    sessionStorage.setItem('last_search_page', '1');
-                    sessionStorage.setItem('search_scroll_pos', '0'); // Reset cuộn khi tìm từ mới
-                }
+                fetchSearchResults();
+                setCurrentPage(1);
                 setSearchParams({ q: keyword });
+
+                sessionStorage.setItem('last_search_query', keyword);
+                sessionStorage.setItem('last_search_page', '1');
+                sessionStorage.setItem('search_scroll_pos', '0');
             } else {
                 setProducts([]);
                 setSearchParams({});
-                sessionStorage.clear(); // Xóa sạch cache khi ô tìm kiếm trống
             }
         }, 500);
 
         return () => clearTimeout(delayDebounceFn);
     }, [keyword, setSearchParams]);
+
+
+    useEffect(() => {
+        const q = searchParams.get("q") || "";
+        setKeyword(q);
+    }, [searchParams]);
 
     // Các logic tính toán phân trang giữ nguyên...
     const indexOfLastProduct = currentPage * productsPerPage;

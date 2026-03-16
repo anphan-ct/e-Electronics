@@ -35,7 +35,7 @@ io.on("connection", (socket) => {
 
     socket.join(String(userId));
 
-    console.log(`[Socket]: User ${userId} joined.`);
+    //console.log(`[Socket]: User ${userId} joined.`);
 
   });
 
@@ -43,7 +43,7 @@ io.on("connection", (socket) => {
 
     const { room, text, senderId } = data;
 
-    console.log(`[USER ${senderId}]: ${text}`);
+    console.log(`👤 [USER ${senderId}]: ${text}`);
 
     const findConv =
       "SELECT id FROM conversations WHERE user_id = ? LIMIT 1";

@@ -7,6 +7,8 @@ router.post("/chat", async (req, res) => {
 
   const { message, userId } = req.body;
 
+  console.log(`👤 [USER ${userId}]: ${message}`);
+
   try {
 
     const response = await axios.post(
@@ -28,6 +30,8 @@ router.post("/chat", async (req, res) => {
 
     const aiText =
       response.data.candidates[0].content.parts[0].text;
+
+    console.log(`🤖 [AI]: ${aiText}`);
 
     // tìm ai conversation
     const findConv =
