@@ -51,31 +51,49 @@ function ChatBox() {
 
   // 2. Nhận tin nhắn Real-time
   useEffect(() => {
-    if (user?.id) socketRef.current.emit("join_room", user.id);
+  if (user?.id) socketRef.current.emit("join_room", user.id);
 
-    const handleReceive = (msg) => {
-
-      if (String(msg.senderId) === "0") {
-        setAiMessages(prev => [...prev, msg]);
-      } else {
-        setAdminMessages(prev => [...prev, msg]);
+  const handleReceive = (msg) => {
+    // Chỉ xử lý tin nhắn từ Admin tại đây
+    if (String(msg.senderId) !== "0" && String(msg.senderId) !== String(user?.id)) {
+      setAdminMessages(prev => [...prev, msg]);
+      if (isAiMode) {
+        setIsAiMode(false);
+        toast.info("Tư vấn viên đã tham gia hỗ trợ bạn!");
       }
-    };
+    }
+  };
 
-    const handleDeleted = ({ messageId }) => {
-      const id = parseInt(messageId);
-      setAdminMessages(prev => prev.filter(m => m.id !== id));
-      setAiMessages(prev => prev.filter(m => m.id !== id));
-    };
+  const handleDeleted = ({ messageId }) => {
+    const id = parseInt(messageId);
+    // Đồng bộ xóa cho cả 2 mảng tin nhắn
+    setAdminMessages(prev => prev.filter(m => m.id !== id));
+    setAiMessages(prev => prev.filter(m => m.id !== id));
+  };
 
-    socketRef.current.on("receive_message", handleReceive);
-    socketRef.current.on("message_deleted", handleDeleted);
+  const handleAIMessage = (msg) => {
+    // FIX 1: Thêm ?. tránh lỗi null và FIX 2: Chỉ nhận tin từ AI (tránh trùng lặp tin user)
+    if (String(msg.userId) === String(user?.id) && msg.sender === "ai") { 
+      const newMsg = {
+        id: msg.id, // Lưu ID để đồng bộ xóa
+        senderId: 0,
+        text: msg.text,
+        time: new Date()
+      };
+      setAiMessages(prev => [...prev, newMsg]);
+    }
+  };
 
-    return () => {
-      socketRef.current.off("receive_message", handleReceive);
-      socketRef.current.off("message_deleted", handleDeleted);
-    };
-  }, [user?.id]);
+  socketRef.current.on("receive_message", handleReceive);
+  socketRef.current.on("message_deleted", handleDeleted);
+  socketRef.current.on("ai_message", handleAIMessage);
+
+  return () => {
+    socketRef.current.off("receive_message", handleReceive);
+    socketRef.current.off("message_deleted", handleDeleted);
+    socketRef.current.off("ai_message", handleAIMessage);
+  };
+}, [user?.id, isAiMode]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -94,68 +112,33 @@ function ChatBox() {
     }
   };
 
+
   const sendMessage = async (e) => {
-
     e.preventDefault();
-
     if (!input.trim() || !user) return;
 
-    const text = input;
-
+    const textContent = input; 
     setInput("");
 
-    // ================= AI CHAT =================
     if (isAiMode) {
-
-      const userMsg = {
-        senderId: user.id,
-        text: text,
-        time: new Date()
-      };
-
-      // hiển thị message user ngay
-      setAiMessages(prev => [...prev, userMsg]);
-
+      // KHÔNG setAiMessages tại đây nữa. Để Socket handle giúp tránh trùng lặp.
+      const localMsg = { senderId: user.id, text: textContent, time: new Date(), id: Date.now() };
+      setAiMessages(prev => [...prev, localMsg]); 
       try {
-
-        const res = await axios.post(
-          "http://localhost:5000/api/ai/chat",
-          {
-            message: text,
-            userId: user.id
-          }
-        );
-
-        const aiMsg = {
-          senderId: 0,
-          text: res.data.reply,
-          time: new Date()
-        };
-
-        setAiMessages(prev => [...prev, aiMsg]);
-
+        await axios.post("http://localhost:5000/api/ai/chat", {
+          message: textContent,
+          userId: user.id
+        });
       } catch (err) {
-
-        setAiMessages(prev => [
-          ...prev,
-          { senderId: 0, text: "AI hiện đang bận." }
-        ]);
-
+        toast.error("AI hiện đang bận.");
       }
-
-    }
-
-    // ================= ADMIN CHAT =================
-    else {
-
+    } else {
       socketRef.current.emit("send_message", {
         room: user.id,
-        text: text,
-        senderId: user.id
+        text: textContent,
+        senderId: user.id,
       });
-
     }
-
   };
 
 
