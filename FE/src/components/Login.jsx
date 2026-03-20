@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { login } from "../api/authApi";
 import { ThemeContext } from "../context/ThemeContext";
 import { toast } from "react-toastify";
@@ -9,6 +9,36 @@ function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+
+  useEffect(() => {
+    const cleanup = () => {
+      document.body.classList.remove("modal-open");
+      document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
+      const backdrops = document.querySelectorAll(".modal-backdrop");
+      backdrops.forEach(b => b.remove());
+    };
+    const loginModalEl = document.getElementById("loginModal");
+    loginModalEl?.addEventListener('hidden.bs.modal', cleanup);
+    return () => loginModalEl?.removeEventListener('hidden.bs.modal', cleanup);
+  }, []);
+
+
+  const handleSwitchToRegister = (e) => {
+    e.preventDefault();
+    const loginModalEl = document.getElementById("loginModal");
+    const registerModalEl = document.getElementById("registerModal");
+
+    if (window.bootstrap) {
+      const loginInstance = window.bootstrap.Modal.getOrCreateInstance(loginModalEl);
+      loginInstance.hide();
+      setTimeout(() => {
+        const registerInstance = window.bootstrap.Modal.getOrCreateInstance(registerModalEl);
+        registerInstance.show();
+      }, 400);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,6 +54,7 @@ function Login() {
       // 1. Lưu dữ liệu người dùng và token
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
+      window.dispatchEvent(new Event("login"));
 
       toast.success(`Đăng nhập thành công!`);
 
@@ -126,9 +157,7 @@ function Login() {
                 <a 
                   href="#" 
                   className="text-primary text-decoration-none fw-bold"
-                  data-bs-dismiss="modal" 
-                  data-bs-toggle="modal" 
-                  data-bs-target="#registerModal"
+                  onClick={handleSwitchToRegister}
                 >
                   Signup now
                 </a>

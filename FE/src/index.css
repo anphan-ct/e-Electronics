@@ -416,15 +416,29 @@ body.dark .auth-modal-content {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.footer-links a {
-  color: inherit;
-  opacity: 0.7;
-  transition: all 0.2s ease;
+.footer-links a, 
+.hover-link {
+  transition: all 0.3s ease;
+  display: inline-block;
+  color: rgba(255, 255, 255, 0.8) !important; /* Màu trắng mờ để dễ đọc trên nền xanh */
+  text-decoration: none;
 }
 
-.footer-links a:hover {
+/* 1. KHI DI CHUỘT VÀO Ở CHẾ ĐỘ SÁNG (Light Mode) */
+/* Vì nền là Gradient xanh, ta chuyển hover sang màu TRẮNG tinh */
+.footer-links a:hover, 
+.hover-link:hover {
+  color: #ffffff !important; 
+  padding-left: 5px;
+  transform: translateX(5px); /* Hiệu ứng trượt nhẹ sang phải */
   opacity: 1;
-  color: #0d6efd !important; /* Màu xanh Primary của bạn */
+}
+
+/* 2. RIÊNG Ở CHẾ ĐỘ TỐI (Dark Mode) */
+/* Vì nền tối (#1a1a1a), ta dùng màu XANH dương để làm nổi bật */
+body.dark .footer-links a:hover,
+body.dark .hover-link:hover {
+  color: #0d6efd !important;
   padding-left: 5px;
 }
 
@@ -1139,4 +1153,82 @@ body.dark .custom-scrollbar::-webkit-scrollbar-thumb {
 /* Đảm bảo icon nổi bật trong Dark Mode */
 body.dark .btn-admin-delete-msg {
   color: #adb5bd; /* Màu xám bạc để thấy trên nền tối */
+}
+
+.search-wrapper {
+    display: flex;
+    align-items: center;
+    border-radius: 50px;
+    padding: 5px;
+    background: white;
+    border: 1px solid #eee;
+    transition: all 0.3s ease;
+}
+
+.dark .search-wrapper {
+    background: #2b2b2b;
+    border-color: #444;
+}
+
+.search-wrapper:focus-within {
+    box-shadow: 0 5px 15px rgba(13, 110, 253, 0.15) !important;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Hiệu ứng nhấc bổng cho Card và Nút */
+.hover-lift {
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s;
+}
+.hover-lift:hover {
+  transform: translateY(-3px);
+}
+
+/* Hiệu ứng scale nhẹ */
+.hover-scale {
+  transition: transform 0.2s ease-in-out;
+}
+.hover-scale:hover {
+  transform: scale(1.1);
+}
+
+/* Hover link cho footer */
+.hover-link {
+  color: inherit;
+  opacity: 0.7;
+}
+.hover-link:hover {
+  color: #0d6efd !important;
+  opacity: 1;
+  padding-left: 4px;
+}
+
+/* Background hover cho Navbar Links */
+.hover-bg-theme:hover {
+  background-color: rgba(13, 110, 253, 0.1);
+  color: #0d6efd !important;
+}
+
+/* Đổ bóng phía trên cho Footer Light mode */
+.shadow-lg-top {
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.03);
+}
+
+/* Đồng bộ hiệu ứng chuyển đổi toàn trang */
+.transition-all {
+  transition: all 0.3s ease-in-out !important;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.transition-all {
+  transition: all 0.25s ease-in-out;
 }

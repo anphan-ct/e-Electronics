@@ -61,22 +61,24 @@ exports.register = async (req, res) => {
   const { name, email, password } = req.body;
 
   try {
-    // 1. Kiểm tra email đã tồn tại chưa
     const checkSql = "SELECT * FROM users WHERE email = ?";
     db.query(checkSql, [email], async (err, result) => {
       if (result.length > 0) {
         return res.status(400).json({ message: "Email này đã được đăng ký!" });
       }
 
-      // 2. Mã hóa mật khẩu (Bắt buộc để login hoạt động)
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
 
-      // 3. Lưu vào Database (Mặc định role là 'user')
       const sql = "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, 'user')";
       db.query(sql, [name, email, hashedPassword], (err, result) => {
         if (err) return res.status(500).json(err);
-        res.status(201).json({ message: "Đăng ký tài khoản thành công!" });
+        
+        // Trả về cả id vừa được tạo (result.insertId)
+        res.status(201).json({ 
+          message: "Đăng ký tài khoản thành công!",
+          userId: result.insertId 
+        });
       });
     });
   } catch (error) {
@@ -109,4 +111,67 @@ exports.getAllUsers = (req, res) => {
     if (err) return res.status(500).json(err);
     res.json(result);
   });
+};
+
+// Cập nhật hồ sơ người dùng
+exports.updateProfile = (req, res) => {
+  const userId = req.user.id; // Lấy từ authMiddleware
+  const { name, email } = req.body;
+
+  // 1. Kiểm tra email mới có bị trùng với user khác không
+  const checkEmailSql = "SELECT id FROM users WHERE email = ? AND id != ?";
+  db.query(checkEmailSql, [email, userId], (err, result) => {
+    if (err) return res.status(500).json(err);
+    if (result.length > 0) {
+      return res.status(400).json({ message: "Email này đã được sử dụng bởi tài khoản khác!" });
+    }
+
+    // 2. Tiến hành cập nhật
+    const updateSql = "UPDATE users SET name = ?, email = ? WHERE id = ?";
+    db.query(updateSql, [name, email, userId], (err, result) => {
+      if (err) return res.status(500).json(err);
+      
+      // Trả về thông tin mới để frontend cập nhật lại localStorage
+      res.json({
+        message: "Cập nhật hồ sơ thành công!",
+        user: { id: userId, name, email, role: req.user.role } // role lấy từ token cũ
+      });
+    });
+  });
+};
+
+
+// ĐỔI MẬT KHẨU
+exports.changePassword = async (req, res) => {
+  const userId = req.user.id;
+  const { oldPassword, newPassword } = req.body;
+
+  try {
+    const sql = "SELECT password FROM users WHERE id = ?";
+    db.query(sql, [userId], async (err, result) => {
+      if (err) return res.status(500).json(err);
+
+      const user = result[0];
+
+      // 1. Kiểm tra mật khẩu cũ
+      const isMatch = await bcrypt.compare(oldPassword, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ message: "Mật khẩu cũ không đúng" });
+      }
+
+      // 2. Hash mật khẩu mới
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+      // 3. Update DB
+      const updateSql = "UPDATE users SET password = ? WHERE id = ?";
+      db.query(updateSql, [hashedPassword, userId], (err) => {
+        if (err) return res.status(500).json(err);
+
+        res.json({ message: "Đổi mật khẩu thành công!" });
+      });
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Lỗi server" });
+  }
 };

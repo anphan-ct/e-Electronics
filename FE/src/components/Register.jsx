@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import axios from "axios";
 import { ThemeContext } from "../context/ThemeContext";
 import { toast } from "react-toastify"; // Đảm bảo đã import toast
@@ -8,7 +8,23 @@ function Register() {
   const [formData, setFormData] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
 
-  const handleRegister = async (e) => {
+
+  // 1. Thêm useEffect ngay đầu component
+  useEffect(() => {
+    const cleanup = () => {
+      document.body.classList.remove("modal-open");
+      document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
+      const backdrops = document.querySelectorAll(".modal-backdrop");
+      backdrops.forEach(b => b.remove());
+    };
+
+    const regModalEl = document.getElementById("registerModal");
+    regModalEl?.addEventListener('hidden.bs.modal', cleanup);
+    return () => regModalEl?.removeEventListener('hidden.bs.modal', cleanup);
+  }, []);
+
+    const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
 
@@ -39,6 +55,23 @@ function Register() {
       const msg = err.response?.data?.message || "Đăng ký thất bại, vui lòng thử lại";
       setError(msg);
       toast.error(msg); // Hiện lỗi nếu email đã tồn tại hoặc lỗi server
+    }
+  };
+
+  const handleSwitchToLogin = (e) => {
+    if (e) e.preventDefault();
+    const loginModalEl = document.getElementById("loginModal");
+    const registerModalEl = document.getElementById("registerModal");
+
+    if (window.bootstrap) {
+      const regInstance = window.bootstrap.Modal.getOrCreateInstance(registerModalEl);
+      regInstance.hide();
+
+      // Đợi 400ms để hiệu ứng CSS mờ dần của Bootstrap hoàn tất mới mở modal mới
+      setTimeout(() => {
+        const loginInstance = window.bootstrap.Modal.getOrCreateInstance(loginModalEl);
+        loginInstance.show();
+      }, 400);
     }
   };
 
@@ -107,9 +140,7 @@ function Register() {
                 <a 
                   href="#!" 
                   className="text-primary text-decoration-none fw-bold" 
-                  data-bs-dismiss="modal" 
-                  data-bs-toggle="modal" 
-                  data-bs-target="#loginModal"
+                  onClick={handleSwitchToLogin}
                 >
                   Login now
                 </a>

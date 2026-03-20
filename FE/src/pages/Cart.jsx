@@ -2,10 +2,25 @@ import { useContext, useEffect, useLayoutEffect } from "react";
 import { CartContext } from "../context/CartContext";
 import { ThemeContext } from "../context/ThemeContext";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
 
 function Cart() {
   const { cart, removeFromCart, clearCart, updateQuantity } = useContext(CartContext);
   const { theme } = useContext(ThemeContext);
+
+  const handleRemoveItem = (id, name) =>{
+    if(window.confirm(`Bạn có chắc muốn xóa "${name}" khỏi giỏ hàng không?`)) {
+      removeFromCart(id);
+      toast.success("Đã xóa sản phẩm thành công!", { autoClose: 1200 });
+    }
+  }
+
+  const handleClearAll = () => {
+    if (window.confirm("Bạn có chắn chắn muốn xóa toàn bộ giỏ hàng không?")) {
+      clearCart();
+      toast.success("Đã xóa toàn bộ giỏ hàng!", { autoClose: 1200 });
+    }
+  }
 
   // --- LƯU VỊ TRÍ CUỘN CHUỘT ---
   useEffect(() => {
@@ -94,7 +109,7 @@ function Cart() {
                         </td>
                         <td className="fw-bold text-primary fs-5">${item.price}</td>
                         <td className="text-center pe-4">
-                          <button className="btn btn-link text-danger p-0 text-decoration-none transition-all hover-scale" onClick={() => removeFromCart(item.id)}>
+                          <button className="btn btn-link text-danger p-0 text-decoration-none transition-all hover-scale" onClick={() => handleRemoveItem(item.id, item.name)}>
                             <span className="fs-5">🗑️</span>
                           </button>
                         </td>
@@ -109,7 +124,7 @@ function Cart() {
                 <Link to="/shop" className="text-decoration-none fw-bold text-primary px-3 hover-link">← Tiếp tục thêm đồ</Link>
                 <button 
                   className="btn btn-sm btn-outline-danger border-0 fw-bold px-3 transition-all" 
-                  onClick={() => clearCart && clearCart()}
+                  onClick={handleClearAll}
                 >
                   Xóa tất cả giỏ hàng
                 </button>

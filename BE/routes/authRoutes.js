@@ -19,4 +19,10 @@ router.get("/profile", verifyToken, authController.getProfile);
 // GET ALL USER 
 router.get("/users", verifyToken, authController.getAllUsers);
 
+// UPDATE USER PROFILE
+router.put("/update-profile", verifyToken, authController.updateProfile);
+
+// CHANGE PASSWORD
+router.put("/change-password", verifyToken, authController.changePassword);
+
 module.exports = router;
