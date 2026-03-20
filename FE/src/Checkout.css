@@ -1,0 +1,201 @@
+/* ============================= */
+/* CHECKOUT PAGE                 */
+/* ============================= */
+ 
+/* Card section */
+.co-card {
+  border-radius: 20px;
+  padding: 28px;
+  border: 1px solid transparent;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.07);
+  transition: box-shadow 0.3s;
+}
+ 
+.co-card:hover {
+  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.11);
+}
+ 
+.co-card-light {
+  background: #ffffff;
+  border-color: #f0f0f0;
+}
+ 
+.co-card-dark {
+  background: #1e1e1e;
+  border-color: #2c2c2c;
+}
+ 
+/* Step badge */
+.co-step {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #21d4fd 0%, #b721ff 100%);
+}
+ 
+/* Input */
+.co-input {
+  border-radius: 12px !important;
+  font-size: 0.95rem;
+  border: 1.5px solid #dee2e6 !important;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+ 
+.co-input:focus {
+  border-color: #b721ff !important;
+  box-shadow: 0 0 0 3px rgba(183, 33, 255, 0.1) !important;
+  outline: none;
+}
+ 
+.co-input-dark {
+  background: #2a2a2a !important;
+  border-color: #444 !important;
+  color: white !important;
+}
+ 
+.co-input-dark::placeholder {
+  color: #888 !important;
+}
+ 
+.co-input-dark:focus {
+  border-color: #b721ff !important;
+  box-shadow: 0 0 0 3px rgba(183, 33, 255, 0.15) !important;
+}
+ 
+/* Payment option */
+.co-payment {
+  border-radius: 14px;
+  border: 2px solid transparent;
+  padding: 18px 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+ 
+.co-payment:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+ 
+.co-payment-light {
+  border-color: #e9ecef;
+  background: #fff;
+}
+ 
+.co-payment-dark {
+  border-color: #3a3a3a;
+  background: #2a2a2a;
+}
+ 
+.co-payment-cod {
+  border-color: #0d6efd !important;
+  background: rgba(13, 110, 253, 0.06) !important;
+}
+ 
+.co-payment-vnpay {
+  border-color: #005baa !important;
+  background: rgba(0, 91, 170, 0.06) !important;
+}
+ 
+/* Payment icon wrapper */
+.co-payment-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+ 
+.co-payment-icon-active-cod {
+  background: rgba(13, 110, 253, 0.12);
+}
+ 
+.co-payment-icon-active-vnpay {
+  background: rgba(0, 91, 170, 0.12);
+}
+ 
+/* VNPay badge */
+.co-vnpay-badge {
+  background: #005baa;
+  color: white;
+  font-weight: 900;
+  font-size: 11px;
+  padding: 3px 7px;
+  border-radius: 5px;
+  letter-spacing: 0.5px;
+}
+ 
+.co-vnpay-check {
+  color: #005baa;
+}
+ 
+/* Product row in summary */
+.co-product-row {
+  border-radius: 10px;
+  padding: 6px 8px;
+  transition: background 0.2s;
+}
+ 
+.co-product-row:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+ 
+.co-product-row-dark:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+ 
+/* Total box */
+.co-total-box {
+  padding: 16px;
+}
+ 
+.co-total-box-dark {
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+ 
+/* Submit button */
+.co-submit-btn {
+  height: 54px;
+  border-radius: 14px !important;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  transition: opacity 0.2s, transform 0.2s !important;
+}
+ 
+.co-submit-btn:hover:not(:disabled) {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+ 
+.co-submit-btn:disabled {
+  opacity: 0.7;
+}
+ 
+/* VNPay badge inside button */
+.co-vnpay-badge-btn {
+  background: #fff;
+  color: #005baa;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-weight: 900;
+  font-size: 12px;
+}
+ 
+/* Security note */
+.co-security {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 12px;
+  opacity: 0.6;
+}

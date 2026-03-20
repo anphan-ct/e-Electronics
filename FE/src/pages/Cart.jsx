@@ -134,9 +134,9 @@ function Cart() {
 
           {/* CỘT PHẢI: TỔNG KẾT ĐƠN HÀNG */}
           <div className="col-lg-4">
-            <div className={`p-4 shadow-lg auth-modal-content sticky-top border ${
+            <div className={`p-4 shadow-lg auth-modal-content border ${
               theme === "dark" ? "bg-dark border-secondary text-light" : "bg-white border-light-subtle text-dark"
-            }`} style={{ top: "100px" }}>
+            }`}>
               <h5 className="fw-bold mb-4 border-bottom pb-3">Tóm tắt đơn hàng</h5>
               
               <div className="d-flex justify-content-between mb-3 align-items-center">

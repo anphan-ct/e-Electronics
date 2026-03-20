@@ -1232,3 +1232,111 @@ body.dark .btn-admin-delete-msg {
 .transition-all {
   transition: all 0.25s ease-in-out;
 }
+
+
+/* Page background light */
+.pr-page-light {
+  background: linear-gradient(135deg, #f0f4ff 0%, #faf5ff 100%);
+}
+ 
+/* Card */
+.pr-card {
+  border-radius: 24px;
+  padding: 40px 36px;
+  border: 1px solid transparent;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.10);
+  text-align: center;
+}
+ 
+.pr-card-light {
+  background: #ffffff;
+  border-color: #f0f0f0;
+}
+ 
+.pr-card-dark {
+  background: #1e1e1e;
+  border-color: #2c2c2c;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.35);
+}
+ 
+/* Icon wrapper */
+.pr-icon-wrap {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 8px;
+}
+ 
+.pr-icon-success {
+  background: rgba(25, 195, 125, 0.12);
+  color: #19c37d;
+}
+ 
+.pr-icon-failed {
+  background: rgba(220, 53, 69, 0.12);
+  color: #dc3545;
+}
+ 
+.pr-icon-warning {
+  background: rgba(255, 193, 7, 0.12);
+  color: #ffc107;
+}
+ 
+/* Detail box */
+.pr-detail-box {
+  border-radius: 14px;
+  padding: 18px 20px;
+  text-align: left;
+}
+ 
+.pr-detail-box-light {
+  background: #f8f9fa;
+  border: 1px solid #eee;
+}
+ 
+.pr-detail-box-dark {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid #3a3a3a;
+}
+ 
+/* Detail row */
+.pr-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px dashed rgba(0, 0, 0, 0.07);
+}
+ 
+body.dark .pr-detail-row {
+  border-bottom-color: rgba(255, 255, 255, 0.07);
+}
+ 
+/* txnRef value truncate on small screens */
+.pr-detail-val {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8rem;
+}
+ 
+/* Buttons */
+.pr-btn {
+  height: 50px;
+  border-radius: 12px !important;
+  font-weight: 700;
+  font-size: 0.95rem;
+  transition: opacity 0.2s, transform 0.2s;
+}
+ 
+.pr-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+ 

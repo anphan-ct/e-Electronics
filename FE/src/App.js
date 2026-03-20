@@ -20,6 +20,7 @@ import Checkout from "./pages/Checkout";
 import UserProfile from "./pages/UserProfile";
 import AdminChat from "./pages/Admin/AdminChat";
 import Search from './pages/Search';
+import PaymentResult from "./pages/PaymentResult";
 
 
 function App() {
@@ -42,6 +43,7 @@ function App() {
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/profile" element={<UserProfile />} />
           <Route path="/search" element={<Search />} />
+          <Route path="/checkout/result" element={<PaymentResult />} />
 
           {/* Admin Chat */}
           <Route path="/admin/chat" element={<AdminChat />} />

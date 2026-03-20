@@ -4,7 +4,7 @@ import { CartContext } from "../context/CartContext";
 import { ThemeContext } from "../context/ThemeContext";
 import { toast } from "react-toastify";
 import { Search, Moon, Sun, ShoppingCart, LogOut, User, LayoutDashboard, Menu } from 'lucide-react';
-
+ 
 function Header() {
   const { cart } = useContext(CartContext);
   const { theme, toggleTheme } = useContext(ThemeContext);
@@ -12,7 +12,7 @@ function Header() {
   const location = useLocation();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-
+ 
   const loadUser = () => {
     try {
       const data = localStorage.getItem("user");
@@ -25,7 +25,7 @@ function Header() {
       setUser(null);
     }
   };
-
+ 
   useEffect(() => {
     loadUser();
     window.addEventListener("storage", loadUser);
@@ -35,12 +35,20 @@ function Header() {
       window.removeEventListener("login", loadUser);
     };
   }, []);
-
+ 
   const isActive = (path) => location.pathname === path;
-
+ 
   const confirmLogout = () => {
-    localStorage.clear();
+    // CHỈ THAY ĐỔI: xóa token và user thay vì localStorage.clear()
+    // để giữ lại cart data (cart_user_xxx) trong localStorage
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("theme"); // giữ lại nếu muốn giữ theme, xóa nếu không
+ 
     setUser(null);
+    // Bắn event để CartContext biết user đã logout → reset cart về rỗng
+    window.dispatchEvent(new Event("login"));
+ 
     toast.info("Logout successful!");
     const modalElement = document.getElementById("logoutModal");
     if (window.bootstrap) {
@@ -49,20 +57,20 @@ function Header() {
     }
     setTimeout(() => { window.location.href = "/"; }, 1500);
   };
-
+ 
   const handleSearch = (e) => {
     e.preventDefault();
     if (keyword.trim()) {
       navigate(`/search?q=${encodeURIComponent(keyword.trim())}`);
     }
   };
-
+ 
   // Hiệu ứng Glassmorphism cho Header
   const headerStyle = {
     backdropFilter: 'blur(12px)',
     backgroundColor: theme === "dark" ? "rgba(18, 18, 18, 0.85)" : "rgba(255, 255, 255, 0.85)",
   };
-
+ 
   return (
     <>
       <nav className={`navbar navbar-expand-lg sticky-top border-bottom transition-all ${
@@ -75,11 +83,11 @@ function Header() {
               E-<span className="text-primary">Electronics</span>
             </span>
           </Link>
-
+ 
           <button className="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
             <Menu size={24} />
           </button>
-
+ 
           <div className="collapse navbar-collapse" id="navContent">
             {/* LINKS CHÍNH */}
             <ul className="navbar-nav mx-auto gap-1">
@@ -94,7 +102,7 @@ function Header() {
                 }`}>Shop</Link>
               </li>
             </ul>
-
+ 
             {/* ACTIONS */}
             <div className="d-flex align-items-center gap-3 mt-3 mt-lg-0">
               {/* SEARCH BOX */}
@@ -113,14 +121,14 @@ function Header() {
                   <Search size={16} />
                 </button>
               </form>
-
+ 
               {/* THEME TOGGLE */}
               <button className={`btn btn-icon rounded-circle p-2 border-0 shadow-sm ${
                 theme === "dark" ? "bg-dark text-warning" : "bg-light text-primary"
               }`} onClick={toggleTheme}>
                 {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
               </button>
-
+ 
               {/* CART */}
               <Link to="/cart" className={`btn position-relative p-2 rounded-circle border-0 shadow-sm ${
                 theme === 'dark' ? 'bg-dark text-light' : 'bg-light text-dark'
@@ -132,7 +140,7 @@ function Header() {
                   </span>
                 )}
               </Link>
-
+ 
               {/* USER ACTIONS */}
               {user ? (
                 <div className="d-flex align-items-center gap-2 ps-2 border-start border-secondary-subtle">
@@ -159,7 +167,7 @@ function Header() {
           </div>
         </div>
       </nav>
-
+ 
       {/* MODAL XÁC NHẬN - UI Nâng cấp */}
       <div className="modal fade" id="logoutModal" tabIndex="-1" aria-hidden="true">
         <div className="modal-dialog modal-sm modal-dialog-centered">
@@ -183,5 +191,5 @@ function Header() {
     </>
   );
 }
-
+ 
 export default Header;
