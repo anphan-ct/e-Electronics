@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { io } from "socket.io-client";
 import axios from "axios";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ThemeContext } from "../context/ThemeContext";
 import { Bot, Send, Headset, X, Trash2 } from "lucide-react";
 import { toast } from "react-toastify";
@@ -19,7 +19,7 @@ function ChatBox() {
   const [adminMessages, setAdminMessages] = useState([]);
   const [aiMessages, setAiMessages] = useState([]);
   const [input, setInput] = useState("");
-
+  const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
 
   // 1. Tải lịch sử Chat (Cả AI và Admin)
@@ -226,7 +226,19 @@ function ChatBox() {
 
       <button 
         className="btn btn-auth-gradient rounded-circle shadow-lg d-flex align-items-center justify-content-center transition-all hover-lift"
-        onClick={() => setIsOpen(!isOpen)} 
+        onClick={() => {
+          if (!user) {
+            toast.info("Vui lòng đăng nhập để sử dụng chat!");
+
+            const loginModal = document.getElementById("loginModal");
+            if (window.bootstrap && loginModal) {
+              window.bootstrap.Modal.getOrCreateInstance(loginModal).show();
+            }
+
+            return;
+          }
+          setIsOpen(!isOpen);
+        }}
         style={{ 
           width: "65px", height: "65px", border: "none", zIndex: 1100,
           pointerEvents: 'auto'
