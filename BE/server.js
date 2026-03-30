@@ -12,7 +12,8 @@
   const aiRoutes = require("./routes/aiRoutes");
   const axios = require("axios");
   const vnpayRoutes = require("./routes/vnpayRoutes");
-  const dashboardRoutes = require("./routes/dashboardRoutes"); 
+  const dashboardRoutes = require("./routes/dashboardRoutes");
+  const orderRoutes = require("./routes/orderRoutes"); 
 
   const app = express();
 
@@ -25,6 +26,7 @@
   app.use("/api/ai", aiRoutes);
   app.use("/api/vnpay", vnpayRoutes);
   app.use("/api/dashboard", dashboardRoutes);
+  app.use("/api/orders", orderRoutes);
 
   const server = http.createServer(app);
 

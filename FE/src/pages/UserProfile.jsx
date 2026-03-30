@@ -11,6 +11,8 @@ function UserProfile() {
   const [activeTab, setActiveTab] = useState("info");
   const navigate = useNavigate();
   const [error, setError] = useState(false);
+  const [orders, setOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({ name: "", email: "" });
@@ -29,10 +31,10 @@ function UserProfile() {
       if (!token) { navigate("/"); return; }
       try {
         const res = await axios.get("http://localhost:5000/api/auth/profile", {
-          headers: { Authorization: `Bearer ${token}` } 
+          headers: { Authorization: `Bearer ${token}` }
         });
         setUser(res.data);
-        setEditData({ name: res.data.name, email: res.data.email }); 
+        setEditData({ name: res.data.name, email: res.data.email });
       } catch (err) {
         setError(true);
         navigate("/");
@@ -40,6 +42,55 @@ function UserProfile() {
     };
     fetchProfile();
   }, [navigate]);
+
+  useEffect(() => {
+    if (activeTab === "orders") {
+      fetchOrders();
+    }
+  }, [activeTab]);
+
+  const groupOrders = (data) => {
+    const result = {};
+
+    data.forEach(item => {
+      if (!result[item.order_id]) {
+        result[item.order_id] = {
+          id: item.order_id,
+          created_at: item.created_at,
+          status: item.status,
+          payment_status: item.payment_status,
+          total: item.total,
+          items: []
+        };
+      }
+
+      result[item.order_id].items.push({
+        name: item.product_name,
+        quantity: item.quantity,
+        price: item.price,
+        image: item.image
+      });
+    });
+
+    return Object.values(result);
+  };
+
+  const fetchOrders = async () => {
+    setLoadingOrders(true);
+    const token = localStorage.getItem("token");
+
+    try {
+      const res = await axios.get("http://localhost:5000/api/orders/my-orders", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      setOrders(groupOrders(res.data));
+    } catch (err) {
+      toast.error("Không tải được đơn hàng");
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
 
   const handleUpdate = async (e) => {
     e.preventDefault();
@@ -142,7 +193,7 @@ function UserProfile() {
             <h4 className="fw-bold mb-1">{user.name}</h4>
             <p className={`mb-3 ${theme === 'dark' ? 'text-white-50' : 'text-muted'}`}>{user.email}</p>
             <div className="nav flex-column gap-2 mt-2">
-              <button className={`nav-link border-0 py-3 px-4 fw-bold d-flex align-items-center justify-content-between rounded-4 transition-all ${activeTab === "info" ? "btn-auth-gradient text-white" : (theme === "dark" ? "text-light hover-dark" : "text-dark border")}`} onClick={() => {setActiveTab("info"); setIsEditing(false);}}>
+              <button className={`nav-link border-0 py-3 px-4 fw-bold d-flex align-items-center justify-content-between rounded-4 transition-all ${activeTab === "info" ? "btn-auth-gradient text-white" : (theme === "dark" ? "text-light hover-dark" : "text-dark border")}`} onClick={() => { setActiveTab("info"); setIsEditing(false); }}>
                 <div className="d-flex align-items-center"><UserCircle size={20} className="me-3" /> Thông tin cá nhân</div>
               </button>
               <button className={`nav-link border-0 py-3 px-4 fw-bold d-flex align-items-center justify-content-between rounded-4 transition-all ${activeTab === "orders" ? "btn-auth-gradient text-white" : (theme === "dark" ? "text-light hover-dark" : "text-dark border")}`} onClick={() => setActiveTab("orders")}>
@@ -175,13 +226,13 @@ function UserProfile() {
                     <div className="col-12">
                       <div className={`p-4 rounded-4 border ${theme === 'dark' ? 'bg-secondary bg-opacity-25 border-secondary' : 'bg-light border-light-subtle'}`}>
                         <small className="d-block text-uppercase fw-bold opacity-50 mb-1" style={{ fontSize: '11px' }}>Họ và tên</small>
-                        {isEditing ? <input type="text" className="form-control bg-transparent border-primary border-0 border-bottom rounded-0 px-0 fw-bold fs-5 shadow-none" value={editData.name} onChange={(e) => setEditData({...editData, name: e.target.value})} required /> : <div className="fs-5 fw-bold">{user.name}</div>}
+                        {isEditing ? <input type="text" className="form-control bg-transparent border-primary border-0 border-bottom rounded-0 px-0 fw-bold fs-5 shadow-none" value={editData.name} onChange={(e) => setEditData({ ...editData, name: e.target.value })} required /> : <div className="fs-5 fw-bold">{user.name}</div>}
                       </div>
                     </div>
                     <div className="col-12">
                       <div className={`p-4 rounded-4 border ${theme === 'dark' ? 'bg-secondary bg-opacity-25 border-secondary' : 'bg-light border-light-subtle'}`}>
                         <small className="d-block text-uppercase fw-bold opacity-50 mb-1" style={{ fontSize: '11px' }}>Địa chỉ Email</small>
-                        {isEditing ? <input type="email" className="form-control bg-transparent border-primary border-0 border-bottom rounded-0 px-0 fw-bold fs-5 shadow-none" value={editData.email} onChange={(e) => setEditData({...editData, email: e.target.value})} required /> : <div className="fs-5 fw-bold">{user.email}</div>}
+                        {isEditing ? <input type="email" className="form-control bg-transparent border-primary border-0 border-bottom rounded-0 px-0 fw-bold fs-5 shadow-none" value={editData.email} onChange={(e) => setEditData({ ...editData, email: e.target.value })} required /> : <div className="fs-5 fw-bold">{user.email}</div>}
                       </div>
                     </div>
 
@@ -209,7 +260,7 @@ function UserProfile() {
                                   <div className="fs-5 fw-bold">••••••••</div>
                                 </div>
                               </div>
-                              <button type="button" className="btn btn-outline-secondary px-4 py-2 rounded-pill fw-bold border-2 transition-all hover-lift shadow-sm" 
+                              <button type="button" className="btn btn-outline-secondary px-4 py-2 rounded-pill fw-bold border-2 transition-all hover-lift shadow-sm"
                                 onClick={() => {
                                   setPassData({
                                     oldPassword: "",
@@ -218,7 +269,7 @@ function UserProfile() {
                                   });
                                   setShowPassModal(true);
                                 }}>
-                                  Đổi mật khẩu
+                                Đổi mật khẩu
                               </button>
                             </div>
                           </div>
@@ -232,7 +283,7 @@ function UserProfile() {
                       <button type="submit" className="btn btn-auth-gradient px-5 py-3 fw-bold shadow-lg d-flex align-items-center gap-2 rounded-pill" disabled={saving}>
                         {saving ? <span className="spinner-border spinner-border-sm me-2"></span> : <Save size={18} />} LƯU THAY ĐỔI
                       </button>
-                      <button type="button" className="btn btn-outline-secondary px-4 py-3 rounded-pill fw-bold border-2" onClick={() => {setIsEditing(false); setEditData({name: user.name, email: user.email});}}>
+                      <button type="button" className="btn btn-outline-secondary px-4 py-3 rounded-pill fw-bold border-2" onClick={() => { setIsEditing(false); setEditData({ name: user.name, email: user.email }); }}>
                         <X size={18} className="me-2" /> HỦY
                       </button>
                     </div>
@@ -240,10 +291,84 @@ function UserProfile() {
                 </form>
               </div>
             ) : (
-              <div className="text-center py-5 animate-fade-in">
-                <div className="display-1 mb-4 opacity-25">📦</div>
-                <h4 className="fw-bold">Đơn hàng trống</h4>
-                <button onClick={() => navigate("/shop")} className="btn btn-auth-gradient px-5 py-3 rounded-pill fw-bold shadow-lg mt-4">KHÁM PHÁ CỬA HÀNG</button>
+              <div className="animate-fade-in">
+                <h3 className="fw-bold mb-4">Lịch sử mua hàng</h3>
+
+                {/* LOADING */}
+                {loadingOrders ? (
+                  <div className="text-center">
+                    <div className="spinner-border"></div>
+                  </div>
+                ) : orders.length === 0 ? (
+                  <div className="text-center py-5">
+                    <div className="display-1 mb-4 opacity-25">📦</div>
+                    <h4 className="fw-bold">Chưa có đơn hàng</h4>
+                    <button
+                      onClick={() => navigate("/shop")}
+                      className="btn btn-auth-gradient px-5 py-3 rounded-pill fw-bold shadow-lg mt-4"
+                    >
+                      KHÁM PHÁ CỬA HÀNG
+                    </button>
+                  </div>
+                ) : (
+                  orders.map(order => (
+                    <div key={order.id} className="card mb-4 p-3 shadow-sm rounded-4">
+
+                      {/* HEADER */}
+                      <div className="d-flex justify-content-between mb-3">
+                        <div>
+                          <strong>Đơn #{order.id}</strong><br />
+                          <small>
+                            {new Date(order.created_at).toLocaleDateString("vi-VN")}
+                          </small>
+                        </div>
+
+                        <div className="text-end">
+                          <span className="badge bg-success">{order.status}</span><br />
+                          <span className="badge bg-info">{order.payment_status}</span>
+                        </div>
+                      </div>
+
+                      {/* ITEMS */}
+                      {order.items?.map((item, index) => (
+                          <div key={index} className="d-flex align-items-center border-top pt-3 mb-3">
+                            {/* Hình ảnh sản phẩm */}
+                            <div className="flex-shrink-0">
+                              <img
+                                src={`/assets/img/${item.image}`} 
+                                alt={item.name}
+                                width="70"
+                                height="70"
+                                className="rounded-3 shadow-sm object-fit-cover me-3 border"
+                              />
+                            </div>
+
+                            {/* Thông tin sản phẩm */}
+                            <div className="flex-grow-1">
+                              <div className={`fw-bold fs-6 mb-1 ${theme === 'dark' ? 'text-white' : 'text-dark'}`}>
+                                {item.name}
+                              </div>
+                              {/* Chỉnh màu chữ 'Số lượng' thành trắng mờ (text-white-50) trong dark mode */}
+                              <div className={`small ${theme === 'dark' ? 'text-white-50' : 'text-muted'}`}>
+                                Số lượng: <span className={`fw-bold ${theme === 'dark' ? 'text-white' : 'text-dark'}`}>{item.quantity}</span>
+                              </div>
+                            </div>
+
+                            {/* Giá sản phẩm */}
+                            <div className="fw-bold text-primary fs-6">
+                              ${item.price.toLocaleString()}
+                            </div>
+                          </div>
+                        ))}
+
+                        {/* TOTAL */}
+                        <div className="text-end mt-3 fw-bold text-danger">
+                          Tổng: ${order.total}
+                        </div>
+
+                    </div>
+                  ))
+                )}
               </div>
             )}
           </div>
@@ -260,9 +385,9 @@ function UserProfile() {
                 <button
                   type="button"
                   className={`btn-close ${theme === 'dark' ? 'btn-close-white' : ''}`}
-                  onClick={() => { 
-                    setShowPassModal(false); 
-                    setPassData({ oldPassword: "", newPassword: "",confirmPassword: ""}); 
+                  onClick={() => {
+                    setShowPassModal(false);
+                    setPassData({ oldPassword: "", newPassword: "", confirmPassword: "" });
                   }}
                 ></button>
               </div>
@@ -270,20 +395,20 @@ function UserProfile() {
                 <div className="mb-3">
                   <label className="small fw-bold mb-2 opacity-75">Mật khẩu hiện tại</label>
                   <div className="position-relative">
-                    <input type={showOldPass ? "text" : "password"} className={`form-control auth-input ${theme === 'dark' ? 'bg-secondary text-white border-0' : 'bg-light border'}`} value={passData.oldPassword} onChange={(e) => setPassData({...passData, oldPassword: e.target.value})} required />
+                    <input type={showOldPass ? "text" : "password"} className={`form-control auth-input ${theme === 'dark' ? 'bg-secondary text-white border-0' : 'bg-light border'}`} value={passData.oldPassword} onChange={(e) => setPassData({ ...passData, oldPassword: e.target.value })} required />
                     <button type="button" className="position-absolute end-0 top-50 translate-middle-y btn border-0" onClick={() => setShowOldPass(!showOldPass)}>{showOldPass ? <EyeOff size={18} /> : <Eye size={18} />}</button>
                   </div>
                 </div>
                 <div className="mb-3">
                   <label className="small fw-bold mb-2 opacity-75">Mật khẩu mới</label>
                   <div className="position-relative">
-                    <input type={showNewPass ? "text" : "password"} className={`form-control auth-input ${theme === 'dark' ? 'bg-secondary text-white border-0' : 'bg-light border'}`} value={passData.newPassword} onChange={(e) => setPassData({...passData, newPassword: e.target.value})} required />
+                    <input type={showNewPass ? "text" : "password"} className={`form-control auth-input ${theme === 'dark' ? 'bg-secondary text-white border-0' : 'bg-light border'}`} value={passData.newPassword} onChange={(e) => setPassData({ ...passData, newPassword: e.target.value })} required />
                     <button type="button" className="position-absolute end-0 top-50 translate-middle-y btn border-0" onClick={() => setShowNewPass(!showNewPass)}>{showNewPass ? <EyeOff size={18} /> : <Eye size={18} />}</button>
                   </div>
                 </div>
                 <div className="mb-4">
                   <label className="small fw-bold mb-2 opacity-75">Xác nhận mật khẩu mới</label>
-                  <input type="password" className={`form-control auth-input ${theme === 'dark' ? 'bg-secondary text-white border-0' : 'bg-light border'}`} value={passData.confirmPassword} onChange={(e) => setPassData({...passData, confirmPassword: e.target.value})} required />
+                  <input type="password" className={`form-control auth-input ${theme === 'dark' ? 'bg-secondary text-white border-0' : 'bg-light border'}`} value={passData.confirmPassword} onChange={(e) => setPassData({ ...passData, confirmPassword: e.target.value })} required />
                 </div>
                 <button
                   type="submit"

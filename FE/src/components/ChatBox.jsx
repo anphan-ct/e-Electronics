@@ -3,7 +3,7 @@ import { io } from "socket.io-client";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ThemeContext } from "../context/ThemeContext";
-import { Bot, Send, Headset, X, Trash2 } from "lucide-react";
+import { Bot, Send, Headset, X, Trash2, Sparkles } from "lucide-react";
 import { toast } from "react-toastify";
 
 const socket = io("http://localhost:5000");
@@ -170,7 +170,7 @@ function ChatBox() {
         >
           <div className="btn-auth-gradient p-4 d-flex justify-content-between align-items-center text-white">
             <div className="d-flex align-items-center gap-3">
-              {isAiMode ? <Bot size={22} /> : <Headset size={22} />}
+              {isAiMode ? <Sparkles size={27} color="white" /> : <Headset size={22} />}
               <h6 className="mb-0 fw-bold">{isAiMode ? "Trợ lý ảo AI" : "Tư vấn viên"}</h6>
             </div>
             <button className="btn btn-sm btn-light rounded-pill px-3 fw-bold shadow-sm" onClick={() => setIsAiMode(!isAiMode)}>
@@ -244,10 +244,10 @@ function ChatBox() {
           pointerEvents: 'auto'
         }}
       >
-        {isOpen ? <X size={30} color="white" /> : (isAiMode ? <Bot size={32} color="white" /> : <Headset size={32} color="white" />)}
+        {isOpen ? <X size={26} color="white" /> : (isAiMode ? <Sparkles size={27} color="white" /> : <Headset size={32} color="white" />)}
       </button>
     </div>
   );
 }
 
-export default ChatBox;
+export default ChatBox; 

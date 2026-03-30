@@ -4,7 +4,8 @@ const db = mysql.createConnection({
   host: "localhost",
   user: "root",
   password: "",
-  database: "myshop"
+  database: "myshop",
+  timezone: "+07:00"
 });
 
 db.connect(err => {

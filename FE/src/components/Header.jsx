@@ -145,7 +145,7 @@ function Header() {
               {user ? (
                 <div className="d-flex align-items-center gap-2 ps-2 border-start border-secondary-subtle">
                   {user.role === "admin" && (
-                    <Link to="/admin/chat" className="btn btn-warning btn-sm rounded-pill fw-bold px-3 shadow-sm d-none d-md-flex align-items-center gap-1">
+                    <Link to="/admin" className="btn btn-warning btn-sm rounded-pill fw-bold px-3 shadow-sm d-none d-md-flex align-items-center gap-1">
                       <LayoutDashboard size={14} /> Admin
                     </Link>
                   )}

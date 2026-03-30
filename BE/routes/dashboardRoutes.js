@@ -5,8 +5,9 @@ const verifyToken = require("../middleware/authMiddleware");
  
 // Middleware kiểm tra admin
 const isAdmin = (req, res, next) => {
-  if (req.user && req.user.role === "admin") return next();
-  // Nếu không có role trong token, vẫn cho qua (tùy chỉnh theo nhu cầu)
+  if (!req.user || req.user.role !== "admin") {
+    return res.status(403).json({ message: "Forbidden" });
+  }
   next();
 };
  

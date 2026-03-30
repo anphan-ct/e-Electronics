@@ -12,7 +12,7 @@ exports.getMessagesByUserId = (req, res) => {
     UNION ALL
     (SELECT am.id, am.message_text as text, 
      CASE WHEN am.role = 'user' THEN ? ELSE 0 END as senderId, 
-     CASE WHEN am.role = 'user' THEN 'user' ELSE 'ai' END as senderRole, -- SỬA TẠI ĐÂY
+     CASE WHEN am.role = 'user' THEN 'user' ELSE 'ai' END as senderRole,
      am.created_at as time
      FROM ai_messages am
      JOIN ai_conversations ac ON am.conversation_id = ac.id
