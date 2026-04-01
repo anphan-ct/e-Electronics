@@ -4,15 +4,14 @@ const router = express.Router();
 const authController = require("../controllers/userController");
 const verifyToken = require("../middleware/authMiddleware");
 const verifyRecaptcha = require("../middleware/recaptchaMiddleware");
+const { loginSecurity } = require("../middleware/loginSecurityMiddleware");
 
 
 // REGISTER
 router.post("/register", authController.register);
 
-
 // LOGIN
 router.post("/login", authController.login);
-
 
 // GET USER PROFILE
 router.get("/profile", verifyToken, authController.getProfile);

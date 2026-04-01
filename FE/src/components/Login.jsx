@@ -1,3 +1,4 @@
+// FE/src/components/Login.jsx
 import { useState, useContext, useEffect, useRef } from "react";
 import { login } from "../api/authApi";
 import { ThemeContext } from "../context/ThemeContext";
@@ -5,45 +6,63 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import ReCAPTCHA from "react-google-recaptcha";
+import { ShieldAlert, Lock, Clock } from "lucide-react";
 
 function Login() {
   const { theme } = useContext(ThemeContext);
-  const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const navigate  = useNavigate();
+
+  const [email,    setEmail]    = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [error,    setError]    = useState("");
+  const [loading,  setLoading]  = useState(false);
 
   // ── reCAPTCHA ─────────────────────────────────────────────
   const recaptchaRef = useRef(null);
   const [recaptchaToken, setRecaptchaToken] = useState("");
-  // ──────────────────────────────────────────────────────────
 
+  // ── Bảo mật ───────────────────────────────────────────────
+  const [attempts,       setAttempts]       = useState(0);
+  const [requireCaptcha, setRequireCaptcha] = useState(false);
+  const [locked,         setLocked]         = useState(false);
+  const [lockCountdown,  setLockCountdown]  = useState(0);
+
+  // Đếm ngược khi bị khóa
   useEffect(() => {
+    if (lockCountdown <= 0) {
+      if (locked) setLocked(false);
+      return;
+    }
+    const timer = setTimeout(() => setLockCountdown(c => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [lockCountdown, locked]);
+
+  // Cleanup khi modal đóng
+  useEffect(() => {
+    const loginModalEl = document.getElementById("loginModal");
+
     const cleanup = () => {
       document.body.classList.remove("modal-open");
       document.body.style.overflow = "";
       document.body.style.paddingRight = "";
-      const backdrops = document.querySelectorAll(".modal-backdrop");
-      backdrops.forEach(b => b.remove());
+      document.querySelectorAll(".modal-backdrop").forEach(b => b.remove());
     };
-    const loginModalEl = document.getElementById("loginModal");
-    loginModalEl?.addEventListener("hidden.bs.modal", cleanup);
-    return () => loginModalEl?.removeEventListener("hidden.bs.modal", cleanup);
-  }, []);
 
-  // Reset reCAPTCHA khi modal đóng
-  useEffect(() => {
-    const loginModalEl = document.getElementById("loginModal");
     const handleModalClose = () => {
+      cleanup();
       recaptchaRef.current?.reset();
       setRecaptchaToken("");
       setError("");
       setEmail("");
       setPassword("");
     };
+
+    loginModalEl?.addEventListener("hidden.bs.modal", cleanup);
     loginModalEl?.addEventListener("hidden.bs.modal", handleModalClose);
-    return () => loginModalEl?.removeEventListener("hidden.bs.modal", handleModalClose);
+    return () => {
+      loginModalEl?.removeEventListener("hidden.bs.modal", cleanup);
+      loginModalEl?.removeEventListener("hidden.bs.modal", handleModalClose);
+    };
   }, []);
 
   const closeModal = () => {
@@ -61,7 +80,7 @@ function Login() {
 
   const handleSwitchToRegister = (e) => {
     e.preventDefault();
-    const loginModalEl = document.getElementById("loginModal");
+    const loginModalEl    = document.getElementById("loginModal");
     const registerModalEl = document.getElementById("registerModal");
     if (window.bootstrap) {
       window.bootstrap.Modal.getOrCreateInstance(loginModalEl).hide();
@@ -73,10 +92,9 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (loading) return;
+    if (loading || (locked && lockCountdown > 0)) return;
 
-    // Kiểm tra reCAPTCHA
-    if (!recaptchaToken) {
+    if (requireCaptcha && !recaptchaToken) {
       setError("Vui lòng xác nhận bạn không phải robot!");
       toast.error("Vui lòng xác nhận bạn không phải robot!");
       return;
@@ -86,16 +104,23 @@ function Login() {
     setLoading(true);
 
     try {
-      const data = await login({ email, password, recaptchaToken });
+      const payload = { email, password };
+      if (requireCaptcha && recaptchaToken) payload.recaptchaToken = recaptchaToken;
+
+      const data = await login(payload);
+
+      // Thành công → reset tất cả trạng thái bảo mật
+      setAttempts(0);
+      setRequireCaptcha(false);
+      setLocked(false);
+      setLockCountdown(0);
 
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       window.dispatchEvent(new Event("login"));
 
       toast.success("Đăng nhập thành công!");
-      setError("");
       closeModal();
-
       setEmail("");
       setPassword("");
       recaptchaRef.current?.reset();
@@ -104,50 +129,60 @@ function Login() {
       if (data.user.role === "admin") {
         setTimeout(() => navigate("/admin/dashboard"), 200);
       }
+
     } catch (err) {
-      // Reset reCAPTCHA sau mỗi lần thất bại
       recaptchaRef.current?.reset();
       setRecaptchaToken("");
+
+      const resData     = err.response?.data || {};
+      const newAttempts = resData.attempts || (attempts + 1);
+
+      setAttempts(newAttempts);
+
+      if (resData.requireCaptcha || newAttempts >= 3) setRequireCaptcha(true);
+
+      if (resData.locked || resData.retryAfter) {
+        setLocked(true);
+        setLockCountdown(resData.retryAfter || (resData.lockMinutes || 1) * 60);
+      }
+
+      const message = resData.message || "Email hoặc mật khẩu không chính xác";
+      setError(message);
+      if (!resData.locked && !resData.retryAfter) toast.error(message);
 
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       window.dispatchEvent(new Event("login"));
-      const message = err.response?.data?.message || "Email hoặc mật khẩu không chính xác";
-      setError(message);
-      toast.error(message);
     }
+
     setLoading(false);
   };
 
   const handleGoogleLogin = async (credentialResponse) => {
-  try {
-    const res = await fetch("http://localhost:5000/api/auth/google", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        token: credentialResponse.credential,
-      }),
-    });
-
-    const data = await res.json();
-
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
-    window.dispatchEvent(new Event("login"));
-
-    toast.success("Đăng nhập Google thành công!");
-    closeModal();
-
-    if (data.user.role === "admin") {
-      setTimeout(() => navigate("/admin/dashboard"), 200);
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: credentialResponse.credential }),
+      });
+      const data = await res.json();
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      window.dispatchEvent(new Event("login"));
+      toast.success("Đăng nhập Google thành công!");
+      closeModal();
+      if (data.user.role === "admin") setTimeout(() => navigate("/admin/dashboard"), 200);
+    } catch {
+      toast.error("Google login thất bại");
     }
+  };
 
-  } catch (err) {
-    toast.error("Google login failed");
-  }
-};
+  const formatCountdown = (s) => {
+    const m = Math.floor(s / 60);
+    return m > 0 ? `${m}:${String(s % 60).padStart(2, "0")}` : `${s}s`;
+  };
+
+  const isDisabled = loading || (locked && lockCountdown > 0);
 
   return (
     <div className="modal fade" id="loginModal" tabIndex="-1" aria-hidden="true">
@@ -158,74 +193,106 @@ function Login() {
 
           <div className="auth-header position-relative text-center pt-5 pb-2">
             <h2 className="fw-bold mb-0">Login Form</h2>
-            <button
-              type="button"
+            <button type="button"
               className={`btn-close position-absolute top-0 end-0 m-3 ${theme === "dark" ? "btn-close-white" : ""}`}
-              data-bs-dismiss="modal"
-            />
+              data-bs-dismiss="modal" />
           </div>
 
           <div className="modal-body px-4 px-md-5 pb-5">
-            {error && (
-              <div className="alert alert-danger py-2 mb-4 text-center">{error}</div>
+
+            {/* Banner khóa tài khoản */}
+            {locked && lockCountdown > 0 ? (
+              <div className="alert border-0 mb-4 p-3 rounded-4 d-flex align-items-center gap-3"
+                style={{ background: "rgba(239,68,68,0.1)", color: "#dc2626" }}>
+                <Lock size={22} className="flex-shrink-0" />
+                <div>
+                  <div className="fw-bold" style={{ fontSize: "13px" }}>Tài khoản tạm thời bị khóa</div>
+                  <div style={{ fontSize: "12px" }}>
+                    Thử lại sau:{" "}
+                    <span className="fw-bold" style={{ fontVariantNumeric: "tabular-nums" }}>
+                      {formatCountdown(lockCountdown)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : error ? (
+              <div className="alert alert-danger py-2 mb-4 text-center d-flex align-items-center gap-2 justify-content-center"
+                style={{ fontSize: "13px" }}>
+                <ShieldAlert size={16} />
+                {error}
+              </div>
+            ) : null}
+
+            {/* Cảnh báo gần đến ngưỡng khóa */}
+            {!locked && attempts >= 3 && attempts < 5 && (
+              <div className="alert border-0 mb-3 p-2 rounded-3 text-center"
+                style={{ background: "rgba(245,158,11,0.1)", color: "#d97706", fontSize: "12px" }}>
+                <Clock size={13} className="me-1" />
+                Còn <strong>{5 - attempts}</strong> lần thử trước khi tài khoản bị khóa
+              </div>
             )}
 
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
-                <input
-                  type="email"
+                <input type="email"
                   className={`form-control auth-input py-3 ${
                     theme === "dark" ? "bg-secondary text-white border-0" : "bg-light border"
                   }`}
                   placeholder="Email or Username"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  required
-                />
+                  disabled={isDisabled}
+                  required />
               </div>
 
               <div className="mb-4">
-                <input
-                  type="password"
+                <input type="password"
                   className={`form-control auth-input py-3 ${
                     theme === "dark" ? "bg-secondary text-white border-0" : "bg-light border"
                   }`}
                   placeholder="Password"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  required
-                />
+                  disabled={isDisabled}
+                  required />
               </div>
 
-              {/* ── Google reCAPTCHA v2 ── */}
-              <div className="d-flex justify-content-center mb-4">
-                <ReCAPTCHA
-                  ref={recaptchaRef}
-                  sitekey={process.env.REACT_APP_RECAPTCHA_SITE_KEY}
-                  onChange={(token) => setRecaptchaToken(token || "")}
-                  onExpired={() => {
-                    setRecaptchaToken("");
-                    toast.warning("reCAPTCHA đã hết hạn, vui lòng xác nhận lại!");
-                  }}
-                  theme={theme === "dark" ? "dark" : "light"}
-                />
-              </div>
+              {/* reCAPTCHA — chỉ hiện sau >= 3 lần sai */}
+              {requireCaptcha && !isDisabled && (
+                <div className="mb-4">
+                  <div className={`p-2 rounded-3 mb-2 text-center ${
+                    theme === "dark" ? "bg-secondary bg-opacity-25" : "bg-light"
+                  }`} style={{ fontSize: "11px", color: theme === "dark" ? "#adb5bd" : "#6c757d" }}>
+                    <ShieldAlert size={12} className="me-1" />
+                    Xác minh bảo mật cần thiết sau nhiều lần đăng nhập sai
+                  </div>
+                  <div className="d-flex justify-content-center">
+                    <ReCAPTCHA
+                      ref={recaptchaRef}
+                      sitekey={process.env.REACT_APP_RECAPTCHA_SITE_KEY}
+                      onChange={(token) => setRecaptchaToken(token || "")}
+                      onExpired={() => {
+                        setRecaptchaToken("");
+                        toast.warning("reCAPTCHA đã hết hạn, vui lòng xác nhận lại!");
+                      }}
+                      theme={theme === "dark" ? "dark" : "light"}
+                    />
+                  </div>
+                </div>
+              )}
 
-              {/* LOGIN thường */}
-              <button
-                type="submit"
+              <button type="submit"
                 className="btn btn-auth-gradient w-100 py-3 fw-bold shadow"
-                disabled={loading || !recaptchaToken}
-              >
-                {loading ? "ĐANG ĐĂNG NHẬP..." : "LOGIN"}
+                disabled={isDisabled || (requireCaptcha && !recaptchaToken)}>
+                {loading             ? "ĐANG ĐĂNG NHẬP..." :
+                 locked && lockCountdown > 0 ? `Chờ ${formatCountdown(lockCountdown)}` :
+                 "LOGIN"}
               </button>
 
-              {/* OR */}
               <div className="text-center my-3">
-                <span className="text-muted">OR</span>
+                <span className={theme === "dark" ? "text-white-50" : "text-muted"}>OR</span>
               </div>
 
-              {/* Google Login */}
               <div className="d-flex justify-content-center mb-3">
                 <GoogleLogin
                   onSuccess={handleGoogleLogin}
@@ -233,7 +300,7 @@ function Login() {
                 />
               </div>
 
-              <div className="text-center mt-4">
+              <div className="text-center mt-3">
                 <span className={theme === "dark" ? "text-white-50" : "text-muted"}>
                   Not a member?{" "}
                 </span>
