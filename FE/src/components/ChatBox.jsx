@@ -20,11 +20,20 @@ function ChatBox() {
   const [aiMessages, setAiMessages] = useState([]);
   const [input, setInput] = useState("");
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user"));
+
+  const getUser = () => {
+    try {
+      const raw = localStorage.getItem("user");
+      return raw ? JSON.parse(raw) : null;
+    } catch (err) {
+      return null;
+    }
+  };
 
   // 1. Tải lịch sử Chat (Cả AI và Admin)
   useEffect(() => {
-
+    if (!isOpen) return; // only load when chat is opened
+    const user = getUser();
     if (!user) return;
 
     axios
@@ -32,10 +41,11 @@ function ChatBox() {
       .then(res => setAiMessages(res.data))
       .catch(() => setAiMessages([]));
 
-  }, [user?.id]);
+  }, [isOpen]);
 
   useEffect(() => {
-
+    if (!isOpen) return;
+    const user = getUser();
     if (!user) return;
 
     const token = localStorage.getItem("token");
@@ -47,13 +57,14 @@ function ChatBox() {
       .then(res => setAdminMessages(res.data))
       .catch(() => setAdminMessages([]));
 
-  }, [user?.id]);
+  }, [isOpen]);
 
   // 2. Nhận tin nhắn Real-time
   useEffect(() => {
-  if (user?.id) socketRef.current.emit("join_room", user.id);
+    const user = getUser();
+    if (isOpen && user?.id) socketRef.current.emit("join_room", user.id);
 
-  const handleReceive = (msg) => {
+    const handleReceive = (msg) => {
     // Chỉ xử lý tin nhắn từ Admin tại đây
     if (String(msg.senderId) !== "0" && String(msg.senderId) !== String(user?.id)) {
       setAdminMessages(prev => [...prev, msg]);
@@ -73,7 +84,8 @@ function ChatBox() {
 
   const handleAIMessage = (msg) => {
     // FIX 1: Thêm ?. tránh lỗi null và FIX 2: Chỉ nhận tin từ AI (tránh trùng lặp tin user)
-    if (String(msg.userId) === String(user?.id) && msg.sender === "ai") { 
+    const userNow = getUser();
+    if (String(msg.userId) === String(userNow?.id) && msg.sender === "ai") { 
       const newMsg = {
         id: msg.id, // Lưu ID để đồng bộ xóa
         senderId: 0,
@@ -93,7 +105,7 @@ function ChatBox() {
     socketRef.current.off("message_deleted", handleDeleted);
     socketRef.current.off("ai_message", handleAIMessage);
   };
-}, [user?.id, isAiMode]);
+}, [isOpen, isAiMode]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -115,28 +127,29 @@ function ChatBox() {
 
   const sendMessage = async (e) => {
     e.preventDefault();
-    if (!input.trim() || !user) return;
+    const userNow = getUser();
+    if (!input.trim() || !userNow) return;
 
     const textContent = input; 
     setInput("");
 
     if (isAiMode) {
       // KHÔNG setAiMessages tại đây nữa. Để Socket handle giúp tránh trùng lặp.
-      const localMsg = { senderId: user.id, text: textContent, time: new Date(), id: Date.now() };
+      const localMsg = { senderId: userNow.id, text: textContent, time: new Date(), id: Date.now() };
       setAiMessages(prev => [...prev, localMsg]); 
       try {
         await axios.post("http://localhost:5000/api/ai/chat", {
           message: textContent,
-          userId: user.id
+          userId: userNow.id
         });
       } catch (err) {
         toast.error("AI hiện đang bận.");
       }
     } else {
       socketRef.current.emit("send_message", {
-        room: user.id,
+        room: userNow.id,
         text: textContent,
-        senderId: user.id,
+        senderId: userNow.id,
       });
     }
   };
@@ -144,6 +157,7 @@ function ChatBox() {
 
   if (location.pathname === "/admin/chat") return null;
 
+  const currentUser = getUser();
   const displayMessages = isAiMode ? aiMessages : adminMessages;
 
   return (
@@ -181,7 +195,7 @@ function ChatBox() {
           <div ref={scrollRef} className="card-body overflow-auto p-4 d-flex flex-column custom-scrollbar" style={{ height: "420px", backgroundColor: theme === "dark" ? "#1a1d21" : "#f8faff" }}>
             {displayMessages.map((msg, index) => {
               const senderID = msg.senderId !== undefined ? msg.senderId : msg.sender_id;
-              const isMe = String(senderID) === String(user?.id);
+              const isMe = String(senderID) === String(currentUser?.id);
               const msgId = msg.id || msg._id;
 
               return (
@@ -227,7 +241,8 @@ function ChatBox() {
       <button 
         className="btn btn-auth-gradient rounded-circle shadow-lg d-flex align-items-center justify-content-center transition-all hover-lift"
         onClick={() => {
-          if (!user) {
+          const userNow = getUser();
+          if (!userNow) {
             toast.info("Vui lòng đăng nhập để sử dụng chat!");
 
             const loginModal = document.getElementById("loginModal");

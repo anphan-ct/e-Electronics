@@ -3,6 +3,7 @@ const router = express.Router();
 
 const authController = require("../controllers/userController");
 const verifyToken = require("../middleware/authMiddleware");
+const verifyRecaptcha = require("../middleware/recaptchaMiddleware");
 
 
 // REGISTER
@@ -24,5 +25,8 @@ router.put("/update-profile", verifyToken, authController.updateProfile);
 
 // CHANGE PASSWORD
 router.put("/change-password", verifyToken, authController.changePassword);
+
+// GOOGLE LOGIN
+router.post("/google", authController.loginGoogle);
 
 module.exports = router;

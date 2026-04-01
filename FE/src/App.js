@@ -23,9 +23,16 @@ import Orders from "./pages/Admin/Orders";
 import Products from "./pages/Admin/Products";
 import Users from "./pages/Admin/Users";
 import Overview from "./pages/Admin/Overview";
+import { useEffect } from "react";
+
+
 
 function App() {
   const { theme } = useContext(ThemeContext);
+
+  useEffect(() => {
+  console.log("ORIGIN:", window.location.origin);
+}, []);
 
   return (
     <div className={`d-flex flex-column min-vh-100 ${theme === "dark" ? "bg-dark text-light" : "bg-white"}`}>
@@ -44,13 +51,6 @@ function App() {
         </Route>
 
         {/* ── NHÓM CÁC TRANG ADMIN (KHÔNG CÓ HEADER/FOOTER USER) ── */}
-        {/* <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<Overview />} />
-          <Route path="orders" element={<Orders />} />
-          <Route path="products" element={<Products />} />
-          <Route path="users" element={<Users />} />
-          <Route path="chat" element={<AdminChat />} />
-        </Route> */}
         <Route path="/admin/*" element={<AdminDashBoard />} />
 
       </Routes>

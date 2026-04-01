@@ -1,9 +1,11 @@
-import { useState, useContext, useEffect } from "react";
+import { useState, useContext, useEffect, useRef } from "react";
 import { login } from "../api/authApi";
 import { ThemeContext } from "../context/ThemeContext";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
- 
+import { GoogleLogin } from "@react-oauth/google";
+import ReCAPTCHA from "react-google-recaptcha";
+
 function Login() {
   const { theme } = useContext(ThemeContext);
   const navigate = useNavigate();
@@ -11,7 +13,12 @@ function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
- 
+
+  // ── reCAPTCHA ─────────────────────────────────────────────
+  const recaptchaRef = useRef(null);
+  const [recaptchaToken, setRecaptchaToken] = useState("");
+  // ──────────────────────────────────────────────────────────
+
   useEffect(() => {
     const cleanup = () => {
       document.body.classList.remove("modal-open");
@@ -24,7 +31,21 @@ function Login() {
     loginModalEl?.addEventListener("hidden.bs.modal", cleanup);
     return () => loginModalEl?.removeEventListener("hidden.bs.modal", cleanup);
   }, []);
- 
+
+  // Reset reCAPTCHA khi modal đóng
+  useEffect(() => {
+    const loginModalEl = document.getElementById("loginModal");
+    const handleModalClose = () => {
+      recaptchaRef.current?.reset();
+      setRecaptchaToken("");
+      setError("");
+      setEmail("");
+      setPassword("");
+    };
+    loginModalEl?.addEventListener("hidden.bs.modal", handleModalClose);
+    return () => loginModalEl?.removeEventListener("hidden.bs.modal", handleModalClose);
+  }, []);
+
   const closeModal = () => {
     const modalElement = document.getElementById("loginModal");
     if (window.bootstrap) {
@@ -37,7 +58,7 @@ function Login() {
       document.body.style.paddingRight = "";
     }, 100);
   };
- 
+
   const handleSwitchToRegister = (e) => {
     e.preventDefault();
     const loginModalEl = document.getElementById("loginModal");
@@ -49,34 +70,45 @@ function Login() {
       }, 400);
     }
   };
- 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading) return;
+
+    // Kiểm tra reCAPTCHA
+    if (!recaptchaToken) {
+      setError("Vui lòng xác nhận bạn không phải robot!");
+      toast.error("Vui lòng xác nhận bạn không phải robot!");
+      return;
+    }
+
     setError("");
     setLoading(true);
- 
+
     try {
-      const data = await login({ email, password });
- 
-      // Lưu token & user
+      const data = await login({ email, password, recaptchaToken });
+
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       window.dispatchEvent(new Event("login"));
- 
+
       toast.success("Đăng nhập thành công!");
       setError("");
       closeModal();
- 
-      // Reset form
+
       setEmail("");
       setPassword("");
- 
-      // ★ Nếu là admin → chuyển thẳng vào dashboard
+      recaptchaRef.current?.reset();
+      setRecaptchaToken("");
+
       if (data.user.role === "admin") {
         setTimeout(() => navigate("/admin/dashboard"), 200);
       }
     } catch (err) {
+      // Reset reCAPTCHA sau mỗi lần thất bại
+      recaptchaRef.current?.reset();
+      setRecaptchaToken("");
+
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       window.dispatchEvent(new Event("login"));
@@ -86,14 +118,44 @@ function Login() {
     }
     setLoading(false);
   };
- 
+
+  const handleGoogleLogin = async (credentialResponse) => {
+  try {
+    const res = await fetch("http://localhost:5000/api/auth/google", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        token: credentialResponse.credential,
+      }),
+    });
+
+    const data = await res.json();
+
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("user", JSON.stringify(data.user));
+    window.dispatchEvent(new Event("login"));
+
+    toast.success("Đăng nhập Google thành công!");
+    closeModal();
+
+    if (data.user.role === "admin") {
+      setTimeout(() => navigate("/admin/dashboard"), 200);
+    }
+
+  } catch (err) {
+    toast.error("Google login failed");
+  }
+};
+
   return (
     <div className="modal fade" id="loginModal" tabIndex="-1" aria-hidden="true">
       <div className="modal-dialog modal-dialog-centered">
         <div className={`modal-content auth-modal-content border-0 shadow-lg ${
           theme === "dark" ? "bg-dark text-light" : "bg-white text-dark"
         }`}>
- 
+
           <div className="auth-header position-relative text-center pt-5 pb-2">
             <h2 className="fw-bold mb-0">Login Form</h2>
             <button
@@ -102,12 +164,12 @@ function Login() {
               data-bs-dismiss="modal"
             />
           </div>
- 
+
           <div className="modal-body px-4 px-md-5 pb-5">
             {error && (
               <div className="alert alert-danger py-2 mb-4 text-center">{error}</div>
             )}
- 
+
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
                 <input
@@ -121,7 +183,7 @@ function Login() {
                   required
                 />
               </div>
- 
+
               <div className="mb-4">
                 <input
                   type="password"
@@ -134,11 +196,43 @@ function Login() {
                   required
                 />
               </div>
- 
-              <button type="submit" className="btn btn-auth-gradient w-100 py-3 fw-bold shadow">
+
+              {/* ── Google reCAPTCHA v2 ── */}
+              <div className="d-flex justify-content-center mb-4">
+                <ReCAPTCHA
+                  ref={recaptchaRef}
+                  sitekey={process.env.REACT_APP_RECAPTCHA_SITE_KEY}
+                  onChange={(token) => setRecaptchaToken(token || "")}
+                  onExpired={() => {
+                    setRecaptchaToken("");
+                    toast.warning("reCAPTCHA đã hết hạn, vui lòng xác nhận lại!");
+                  }}
+                  theme={theme === "dark" ? "dark" : "light"}
+                />
+              </div>
+
+              {/* LOGIN thường */}
+              <button
+                type="submit"
+                className="btn btn-auth-gradient w-100 py-3 fw-bold shadow"
+                disabled={loading || !recaptchaToken}
+              >
                 {loading ? "ĐANG ĐĂNG NHẬP..." : "LOGIN"}
               </button>
- 
+
+              {/* OR */}
+              <div className="text-center my-3">
+                <span className="text-muted">OR</span>
+              </div>
+
+              {/* Google Login */}
+              <div className="d-flex justify-content-center mb-3">
+                <GoogleLogin
+                  onSuccess={handleGoogleLogin}
+                  onError={() => toast.error("Google Login Failed")}
+                />
+              </div>
+
               <div className="text-center mt-4">
                 <span className={theme === "dark" ? "text-white-50" : "text-muted"}>
                   Not a member?{" "}
@@ -155,5 +249,5 @@ function Login() {
     </div>
   );
 }
- 
+
 export default Login;

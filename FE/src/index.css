@@ -1486,3 +1486,11 @@ body.dark .chatbox-input-wrap:focus-within { background: #3a3d4e; }
 
 .chatbox-fab:hover { transform: scale(1.1); }
 .chatbox-fab--close { background: #ff4d4d !important; }
+
+.navbar-brand svg {
+  transition: all 0.3s ease-in-out;
+}
+
+.navbar-brand:hover svg {
+  transform: scale(1.05); /* Hiệu ứng phóng nhẹ khi di chuột vào logo */
+}
