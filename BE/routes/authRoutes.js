@@ -28,4 +28,7 @@ router.put("/change-password", verifyToken, authController.changePassword);
 // GOOGLE LOGIN
 router.post("/google", authController.loginGoogle);
 
+// LINK GOOGLE ACCOUNT
+router.post("/google/link", authController.linkGoogleAccount);
+
 module.exports = router;

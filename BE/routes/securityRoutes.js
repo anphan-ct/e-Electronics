@@ -24,4 +24,7 @@ router.get("/stats", verifyToken, isAdmin, secCtrl.getSecurityStats);
 // POST /api/security/unlock/:userId — mở khóa tài khoản
 router.post("/unlock/:userId", verifyToken, isAdmin, secCtrl.unlockAccount);
 
+// POST /api/security/alerts/dismiss  — admin tắt cảnh báo
+router.post("/alerts/dismiss", verifyToken, isAdmin, secCtrl.dismissAlert);
+
 module.exports = router;

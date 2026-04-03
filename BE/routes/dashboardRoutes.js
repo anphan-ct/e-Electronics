@@ -20,5 +20,14 @@ router.get("/orders", verifyToken, dashboardController.getAllOrders);
 router.put("/orders/:id/status", verifyToken, dashboardController.updateOrderStatus);
 router.get("/products", verifyToken, dashboardController.getProducts);
 router.get("/payment-stats", verifyToken, dashboardController.getPaymentStats);
+
+// User management routes
+router.get("/users/:id", verifyToken, isAdmin, dashboardController.getUserById);
+router.get("/users/:id/orders", verifyToken, isAdmin, dashboardController.getUserOrders);
+router.put("/users/:id/role", verifyToken, isAdmin, dashboardController.updateUserRole);
+router.put("/users/:id/reset-password", verifyToken, isAdmin, dashboardController.resetUserPassword);
+router.put("/users/:id/unlock", verifyToken, isAdmin, dashboardController.unlockUser);
+router.put("/users/:id/lock", verifyToken, isAdmin, dashboardController.lockUser);
+router.delete("/users/:id", verifyToken, isAdmin, dashboardController.deleteUser);
  
 module.exports = router;

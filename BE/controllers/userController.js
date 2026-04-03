@@ -36,6 +36,15 @@ exports.login = (req, res) => {
 
     const user = result[0];
 
+    // CHẶN ĐĂNG NHẬP NẾU BỊ ADMIN KHÓA THỦ CÔNG
+    if (user.status === 'locked') {
+      await onLoginFailed(user.id, email, ip, userAgent, "Cố gắng đăng nhập vào tài khoản đã bị Admin khóa");
+      return res.status(403).json({ 
+        message: "Tài khoản của bạn đã bị khóa bởi Quản trị viên. Vui lòng liên hệ CSKH để được hỗ trợ.",
+        locked: true 
+      });
+    }
+
     // Tài khoản Google không dùng login thường
     if (user.login_type === "google") {
       return res.status(400).json({
@@ -65,7 +74,7 @@ exports.login = (req, res) => {
       });
     }
 
-    // ✅ Đăng nhập thành công
+    // Đăng nhập thành công
     await onLoginSuccess(user.id, email, ip, userAgent);
 
     const token = jwt.sign(
@@ -106,7 +115,7 @@ exports.register = async (req, res) => {
       const hashedPassword = await bcrypt.hash(password, salt);
 
       const sql =
-        "INSERT INTO users (name, email, password, role, login_type) VALUES (?, ?, ?, 'user', 'local')";
+        "INSERT INTO users (name, email, password, role, login_type, status) VALUES (?, ?, ?, 'user', 'local', 'active')";
 
       db.query(sql, [name, email, hashedPassword], (err, result) => {
         if (err) return res.status(500).json(err);
@@ -137,20 +146,20 @@ exports.loginGoogle = async (req, res) => {
     });
 
     const payload        = ticket.getPayload();
-    const { email, name, picture, sub } = payload;
+    const { email, name, picture, sub } = payload; // 'sub' chính là google_id
 
     const sql = "SELECT * FROM users WHERE email = ?";
 
-    db.query(sql, [email], (err, result) => {
+    db.query(sql, [email], async (err, result) => {
       if (err) return res.status(500).json(err);
 
       let user;
 
+      // TRƯỜNG HỢP 1: Email chưa tồn tại -> Tạo mới user
       if (result.length === 0) {
-        // Tạo user mới
         const insertSql = `
-          INSERT INTO users (name, email, password, role, login_type, google_id, avatar)
-          VALUES (?, ?, '', 'user', 'google', ?, ?)
+          INSERT INTO users (name, email, password, role, login_type, google_id, avatar, status)
+          VALUES (?, ?, '', 'user', 'google', ?, ?, 'active')
         `;
 
         db.query(insertSql, [name, email, sub, picture], async (err, insertResult) => {
@@ -167,22 +176,44 @@ exports.loginGoogle = async (req, res) => {
           );
           return res.json({ message: "Login Google success", token: jwtToken, user });
         });
-      } else {
+      } 
+      // TRƯỜNG HỢP 2: Email đã tồn tại
+      else {
         user = result[0];
 
-        onLoginSuccess(user.id, email, ip, userAgent);
+        // CHẶN ĐĂNG NHẬP NẾU BỊ ADMIN KHÓA THỦ CÔNG
+        if (user.status === 'locked') {
+          await onLoginFailed(user.id, email, ip, userAgent, "Cố gắng đăng nhập Google vào tài khoản đã bị Admin khóa");
+          return res.status(403).json({ 
+            message: "Tài khoản của bạn đã bị khóa bởi Quản trị viên. Vui lòng liên hệ CSKH để được hỗ trợ.",
+            locked: true 
+          });
+        }
 
-        const jwtToken = jwt.sign(
-          { id: user.id, email: user.email },
-          process.env.JWT_SECRET,
-          { expiresIn: "1d" }
-        );
+        // Nếu user đã từng liên kết Google (google_id khớp) -> Cho phép login luôn
+        if (user.google_id === sub) {
+          await onLoginSuccess(user.id, email, ip, userAgent);
 
-        return res.json({
-          message: "Login Google success",
-          token: jwtToken,
-          user: { id: user.id, name: user.name, email: user.email, role: user.role },
-        });
+          const jwtToken = jwt.sign(
+            { id: user.id, email: user.email, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: "1d" }
+          );
+
+          return res.json({
+            message: "Login Google success",
+            token: jwtToken,
+            user: { id: user.id, name: user.name, email: user.email, role: user.role },
+          });
+        } 
+        // Nếu user tồn tại nhưng chưa liên kết Google -> Yêu cầu mật khẩu
+        else {
+          return res.status(403).json({
+            requiresLinking: true,
+            email: user.email,
+            message: "Email này đã được đăng ký. Bạn có muốn liên kết với Google không? Vui lòng nhập mật khẩu để xác nhận."
+          });
+        }
       }
     });
   } catch (error) {
@@ -191,11 +222,76 @@ exports.loginGoogle = async (req, res) => {
 };
 
 //
+// ================= LINK GOOGLE ACCOUNT =================
+//
+exports.linkGoogleAccount = async (req, res) => {
+  const { email, password, token } = req.body;
+  const ip        = getClientIP(req);
+  const userAgent = req.headers["user-agent"] || "";
+
+  try {
+    // 1. Xác minh lại Google Token để lấy google_id an toàn từ server
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const googleId = payload.sub;
+
+    // 2. Kiểm tra tài khoản trong DB
+    const sql = "SELECT * FROM users WHERE BINARY email = ?";
+    db.query(sql, [email], async (err, result) => {
+      if (err) return res.status(500).json(err);
+      if (result.length === 0) return res.status(404).json({ message: "Không tìm thấy người dùng." });
+
+      const user = result[0];
+
+      // CHẶN NẾU TÀI KHOẢN BỊ KHÓA
+      if (user.status === 'locked') {
+        return res.status(403).json({ 
+          message: "Tài khoản của bạn đã bị khóa bởi Quản trị viên."
+        });
+      }
+
+      // 3. Xác thực mật khẩu local
+      const checkPassword = await bcrypt.compare(password, user.password);
+      if (!checkPassword) {
+        await onLoginFailed(user.id, email, ip, userAgent, "Sai mật khẩu khi liên kết Google");
+        return res.status(400).json({ message: "Mật khẩu không chính xác." });
+      }
+
+      // 4. Nếu mật khẩu đúng -> Lưu google_id vào DB
+      const updateSql = "UPDATE users SET google_id = ? WHERE id = ?";
+      db.query(updateSql, [googleId, user.id], async (err) => {
+        if (err) return res.status(500).json(err);
+
+        // 5. Cấp quyền đăng nhập thành công
+        await onLoginSuccess(user.id, email, ip, userAgent);
+
+        const jwtToken = jwt.sign(
+          { id: user.id, email: user.email, role: user.role },
+          process.env.JWT_SECRET,
+          { expiresIn: "1d" }
+        );
+
+        res.json({
+          message: "Liên kết tài khoản Google thành công!",
+          token: jwtToken,
+          user: { id: user.id, name: user.name, email: user.email, role: user.role },
+        });
+      });
+    });
+  } catch (error) {
+    res.status(401).json({ message: "Token Google không hợp lệ hoặc đã hết hạn." });
+  }
+};
+
+//
 // ================= GET PROFILE =================
 //
 exports.getProfile = (req, res) => {
   const userId = req.user.id;
-  const sql = "SELECT id, name, email, role, created_at FROM users WHERE id = ?";
+  const sql = "SELECT id, name, email, role, created_at, status FROM users WHERE id = ?";
 
   db.query(sql, [userId], (err, result) => {
     if (err) return res.status(500).json(err);
@@ -208,7 +304,7 @@ exports.getProfile = (req, res) => {
 // ================= GET ALL USERS =================
 //
 exports.getAllUsers = (req, res) => {
-  const sql = "SELECT id, name, email FROM users WHERE role = 'user'";
+  const sql = "SELECT id, name, email, status FROM users WHERE role = 'user'";
   db.query(sql, (err, result) => {
     if (err) return res.status(500).json(err);
     res.json(result);

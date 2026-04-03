@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import ReCAPTCHA from "react-google-recaptcha";
-import { ShieldAlert, Lock, Clock } from "lucide-react";
+import { ShieldAlert, Lock, Clock, Link as LinkIcon } from "lucide-react";
 
 function Login() {
   const { theme } = useContext(ThemeContext);
@@ -17,6 +17,11 @@ function Login() {
   const [error,    setError]    = useState("");
   const [loading,  setLoading]  = useState(false);
 
+  // ── Liên kết Google ───────────────────────────────────────
+  const [isLinkingGoogle, setIsLinkingGoogle] = useState(false);
+  const [googleToken,     setGoogleToken]     = useState("");
+  const [googleEmail,     setGoogleEmail]     = useState("");
+
   // ── reCAPTCHA ─────────────────────────────────────────────
   const recaptchaRef = useRef(null);
   const [recaptchaToken, setRecaptchaToken] = useState("");
@@ -26,8 +31,9 @@ function Login() {
   const [requireCaptcha, setRequireCaptcha] = useState(false);
   const [locked,         setLocked]         = useState(false);
   const [lockCountdown,  setLockCountdown]  = useState(0);
+  const [adminLocked,    setAdminLocked]    = useState(false); // Thêm state kiểm tra khóa bởi admin
 
-  // Đếm ngược khi bị khóa
+  // Đếm ngược khi bị khóa tạm thời
   useEffect(() => {
     if (lockCountdown <= 0) {
       if (locked) setLocked(false);
@@ -55,6 +61,10 @@ function Login() {
       setError("");
       setEmail("");
       setPassword("");
+      setIsLinkingGoogle(false);
+      setGoogleToken("");
+      setGoogleEmail("");
+      setAdminLocked(false); // Reset trạng thái admin lock
     };
 
     loginModalEl?.addEventListener("hidden.bs.modal", cleanup);
@@ -90,9 +100,45 @@ function Login() {
     }
   };
 
+  const handleGoogleLogin = async (credentialResponse) => {
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: credentialResponse.credential }),
+      });
+      const data = await res.json();
+
+      // Trường hợp 1: Admin khóa tài khoản
+      if (res.status === 403 && data.locked && !data.requiresLinking) {
+        setAdminLocked(true);
+        setError(data.message);
+        toast.error("Tài khoản của bạn đã bị khóa.");
+        return;
+      }
+
+      // Trường hợp 2: Yêu cầu nhập mật khẩu để liên kết
+      if (res.status === 403 && data.requiresLinking) {
+        setIsLinkingGoogle(true);
+        setGoogleEmail(data.email);
+        setGoogleToken(credentialResponse.credential);
+        setEmail(data.email);
+        setError("");
+        toast.info("Vui lòng nhập mật khẩu để liên kết tài khoản Google");
+        return;
+      }
+
+      if (!res.ok) throw new Error(data.message || "Google login thất bại");
+
+      handleSuccessLogin(data);
+    } catch (err) {
+      toast.error(err.message || "Google login thất bại");
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (loading || (locked && lockCountdown > 0)) return;
+    if (loading || (locked && lockCountdown > 0) || adminLocked) return;
 
     if (requireCaptcha && !recaptchaToken) {
       setError("Vui lòng xác nhận bạn không phải robot!");
@@ -104,51 +150,58 @@ function Login() {
     setLoading(true);
 
     try {
-      const payload = { email, password };
-      if (requireCaptcha && recaptchaToken) payload.recaptchaToken = recaptchaToken;
+      let data;
+      
+      if (isLinkingGoogle) {
+        const res = await fetch("http://localhost:5000/api/auth/google/link", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: googleEmail, password, token: googleToken }),
+        });
+        data = await res.json();
 
-      const data = await login(payload);
-
-      // Thành công → reset tất cả trạng thái bảo mật
-      setAttempts(0);
-      setRequireCaptcha(false);
-      setLocked(false);
-      setLockCountdown(0);
-
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      window.dispatchEvent(new Event("login"));
-
-      toast.success("Đăng nhập thành công!");
-      closeModal();
-      setEmail("");
-      setPassword("");
-      recaptchaRef.current?.reset();
-      setRecaptchaToken("");
-
-      if (data.user.role === "admin") {
-        setTimeout(() => navigate("/admin/dashboard"), 200);
+        if (!res.ok) {
+          throw { response: { status: res.status, data } };
+        }
+        toast.success("Liên kết tài khoản Google thành công!");
+      } 
+      else {
+        const payload = { email, password };
+        if (requireCaptcha && recaptchaToken) payload.recaptchaToken = recaptchaToken;
+        data = await login(payload);
+        toast.success("Đăng nhập thành công!");
       }
+
+      handleSuccessLogin(data);
 
     } catch (err) {
       recaptchaRef.current?.reset();
       setRecaptchaToken("");
 
-      const resData     = err.response?.data || {};
-      const newAttempts = resData.attempts || (attempts + 1);
+      const resData = err.response?.data || {};
+      const status  = err.response?.status;
 
-      setAttempts(newAttempts);
+      // ── XỬ LÝ NẾU BỊ ADMIN KHÓA THỦ CÔNG ──
+      if (status === 403 && resData.locked && !resData.lockMinutes) {
+        setAdminLocked(true);
+        setError(resData.message || "Tài khoản của bạn đã bị khóa bởi Quản trị viên.");
+      } 
+      // ── XỬ LÝ NẾU SAI MẬT KHẨU / KHÓA TẠM THỜI ──
+      else {
+        const newAttempts = resData.attempts || (attempts + 1);
+        setAttempts(newAttempts);
 
-      if (resData.requireCaptcha || newAttempts >= 3) setRequireCaptcha(true);
+        if (resData.requireCaptcha || newAttempts >= 3) setRequireCaptcha(true);
 
-      if (resData.locked || resData.retryAfter) {
-        setLocked(true);
-        setLockCountdown(resData.retryAfter || (resData.lockMinutes || 1) * 60);
+        if (resData.locked || resData.retryAfter) {
+          setLocked(true);
+          setLockCountdown(resData.retryAfter || (resData.lockMinutes || 1) * 60);
+        }
+
+        const message = resData.message || "Email hoặc mật khẩu không chính xác";
+        setError(message);
+        if (!resData.locked && !resData.retryAfter) toast.error(message);
       }
-
-      const message = resData.message || "Email hoặc mật khẩu không chính xác";
-      setError(message);
-      if (!resData.locked && !resData.retryAfter) toast.error(message);
 
       localStorage.removeItem("token");
       localStorage.removeItem("user");
@@ -158,22 +211,26 @@ function Login() {
     setLoading(false);
   };
 
-  const handleGoogleLogin = async (credentialResponse) => {
-    try {
-      const res = await fetch("http://localhost:5000/api/auth/google", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: credentialResponse.credential }),
-      });
-      const data = await res.json();
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      window.dispatchEvent(new Event("login"));
-      toast.success("Đăng nhập Google thành công!");
-      closeModal();
-      if (data.user.role === "admin") setTimeout(() => navigate("/admin/dashboard"), 200);
-    } catch {
-      toast.error("Google login thất bại");
+  const handleSuccessLogin = (data) => {
+    setAttempts(0);
+    setRequireCaptcha(false);
+    setLocked(false);
+    setLockCountdown(0);
+    setIsLinkingGoogle(false);
+    setAdminLocked(false);
+
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("user", JSON.stringify(data.user));
+    window.dispatchEvent(new Event("login"));
+
+    closeModal();
+    setEmail("");
+    setPassword("");
+    recaptchaRef.current?.reset();
+    setRecaptchaToken("");
+
+    if (data.user.role === "admin") {
+      setTimeout(() => navigate("/admin/dashboard"), 200);
     }
   };
 
@@ -182,7 +239,7 @@ function Login() {
     return m > 0 ? `${m}:${String(s % 60).padStart(2, "0")}` : `${s}s`;
   };
 
-  const isDisabled = loading || (locked && lockCountdown > 0);
+  const isDisabled = loading || (locked && lockCountdown > 0) || adminLocked;
 
   return (
     <div className="modal fade" id="loginModal" tabIndex="-1" aria-hidden="true">
@@ -192,7 +249,9 @@ function Login() {
         }`}>
 
           <div className="auth-header position-relative text-center pt-5 pb-2">
-            <h2 className="fw-bold mb-0">Login Form</h2>
+            <h2 className="fw-bold mb-0">
+              {isLinkingGoogle ? "Liên kết tài khoản" : "Login Form"}
+            </h2>
             <button type="button"
               className={`btn-close position-absolute top-0 end-0 m-3 ${theme === "dark" ? "btn-close-white" : ""}`}
               data-bs-dismiss="modal" />
@@ -200,13 +259,31 @@ function Login() {
 
           <div className="modal-body px-4 px-md-5 pb-5">
 
-            {/* Banner khóa tài khoản */}
-            {locked && lockCountdown > 0 ? (
+            {isLinkingGoogle && !error && (
+              <div className="alert alert-primary border-0 mb-4 p-3 rounded-4 d-flex align-items-center gap-3" style={{ fontSize: "13px" }}>
+                <LinkIcon size={22} className="flex-shrink-0" />
+                <div>Email này đã được đăng ký. Vui lòng nhập mật khẩu để xác nhận liên kết với Google.</div>
+              </div>
+            )}
+
+            {/* ── BANNER KHÓA BỞI ADMIN ── */}
+            {adminLocked ? (
               <div className="alert border-0 mb-4 p-3 rounded-4 d-flex align-items-center gap-3"
                 style={{ background: "rgba(239,68,68,0.1)", color: "#dc2626" }}>
+                <ShieldAlert size={26} className="flex-shrink-0" />
+                <div>
+                  <div className="fw-bold" style={{ fontSize: "14px", marginBottom: "4px" }}>Tài khoản đã bị vô hiệu hóa</div>
+                  <div style={{ fontSize: "12px", lineHeight: "1.4" }}>{error}</div>
+                </div>
+              </div>
+            ) : 
+            /* ── BANNER KHÓA TẠM THỜI (Sai pass) ── */
+            locked && lockCountdown > 0 ? (
+              <div className="alert border-0 mb-4 p-3 rounded-4 d-flex align-items-center gap-3"
+                style={{ background: "rgba(245,158,11,0.1)", color: "#d97706" }}>
                 <Lock size={22} className="flex-shrink-0" />
                 <div>
-                  <div className="fw-bold" style={{ fontSize: "13px" }}>Tài khoản tạm thời bị khóa</div>
+                  <div className="fw-bold" style={{ fontSize: "13px" }}>Khóa do nhập sai nhiều lần</div>
                   <div style={{ fontSize: "12px" }}>
                     Thử lại sau:{" "}
                     <span className="fw-bold" style={{ fontVariantNumeric: "tabular-nums" }}>
@@ -223,8 +300,7 @@ function Login() {
               </div>
             ) : null}
 
-            {/* Cảnh báo gần đến ngưỡng khóa */}
-            {!locked && attempts >= 3 && attempts < 5 && (
+            {!locked && !adminLocked && attempts >= 3 && attempts < 5 && (
               <div className="alert border-0 mb-3 p-2 rounded-3 text-center"
                 style={{ background: "rgba(245,158,11,0.1)", color: "#d97706", fontSize: "12px" }}>
                 <Clock size={13} className="me-1" />
@@ -234,19 +310,23 @@ function Login() {
 
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
+                {/* Đã thêm autoComplete */}
                 <input type="email"
+                  autoComplete="username" 
                   className={`form-control auth-input py-3 ${
                     theme === "dark" ? "bg-secondary text-white border-0" : "bg-light border"
                   }`}
                   placeholder="Email or Username"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  disabled={isDisabled}
+                  disabled={isDisabled || isLinkingGoogle}
                   required />
               </div>
 
               <div className="mb-4">
+                 {/* Đã thêm autoComplete */}
                 <input type="password"
+                  autoComplete="current-password"
                   className={`form-control auth-input py-3 ${
                     theme === "dark" ? "bg-secondary text-white border-0" : "bg-light border"
                   }`}
@@ -257,7 +337,6 @@ function Login() {
                   required />
               </div>
 
-              {/* reCAPTCHA — chỉ hiện sau >= 3 lần sai */}
               {requireCaptcha && !isDisabled && (
                 <div className="mb-4">
                   <div className={`p-2 rounded-3 mb-2 text-center ${
@@ -282,33 +361,59 @@ function Login() {
               )}
 
               <button type="submit"
-                className="btn btn-auth-gradient w-100 py-3 fw-bold shadow"
+                className={`btn btn-auth-gradient w-100 py-3 fw-bold shadow ${isLinkingGoogle ? "btn-primary" : ""}`}
                 disabled={isDisabled || (requireCaptcha && !recaptchaToken)}>
-                {loading             ? "ĐANG ĐĂNG NHẬP..." :
+                {loading              ? "ĐANG XỬ LÝ..." :
+                 adminLocked          ? "BỊ VÔ HIỆU HÓA" :
                  locked && lockCountdown > 0 ? `Chờ ${formatCountdown(lockCountdown)}` :
+                 isLinkingGoogle      ? "XÁC NHẬN LIÊN KẾT" :
                  "LOGIN"}
               </button>
+              
+              {isLinkingGoogle && (
+                <button type="button" 
+                  className={`btn w-100 mt-3 fw-medium shadow-sm ${
+                    theme === "dark" ? "btn-outline-light" : "btn-outline-danger"
+                  }`}
+                  style={{ transition: "all 0.2s ease-in-out" }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = "translateY(0)"}
+                  onClick={() => {
+                    setIsLinkingGoogle(false);
+                    setError("");
+                    setPassword("");
+                  }}>
+                  Hủy và đăng nhập bằng tài khoản khác
+                </button>
+              )}
 
-              <div className="text-center my-3">
-                <span className={theme === "dark" ? "text-white-50" : "text-muted"}>OR</span>
-              </div>
+              {!isLinkingGoogle && (
+                <>
+                  <div className="text-center my-3">
+                    <span className={theme === "dark" ? "text-white-50" : "text-muted"}>OR</span>
+                  </div>
 
-              <div className="d-flex justify-content-center mb-3">
-                <GoogleLogin
-                  onSuccess={handleGoogleLogin}
-                  onError={() => toast.error("Google Login Failed")}
-                />
-              </div>
+                  {/* Ẩn nút Google nếu tài khoản đang bị khóa vĩnh viễn để tránh người dùng nhấn nhầm */}
+                  {!adminLocked && (
+                    <div className="d-flex justify-content-center mb-3">
+                      <GoogleLogin
+                        onSuccess={handleGoogleLogin}
+                        onError={() => toast.error("Google Login Failed")}
+                      />
+                    </div>
+                  )}
 
-              <div className="text-center mt-3">
-                <span className={theme === "dark" ? "text-white-50" : "text-muted"}>
-                  Not a member?{" "}
-                </span>
-                <a href="#" className="text-primary text-decoration-none fw-bold"
-                  onClick={handleSwitchToRegister}>
-                  Signup now
-                </a>
-              </div>
+                  <div className="text-center mt-3">
+                    <span className={theme === "dark" ? "text-white-50" : "text-muted"}>
+                      Not a member?{" "}
+                    </span>
+                    <a href="#" className="text-primary text-decoration-none fw-bold"
+                      onClick={handleSwitchToRegister}>
+                      Signup now
+                    </a>
+                  </div>
+                </>
+              )}
             </form>
           </div>
         </div>

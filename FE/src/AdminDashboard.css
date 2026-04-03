@@ -1086,3 +1086,431 @@
   height: 50px;
   font-size: 18px;
 }
+
+
+
+/* ============================================================
+   USERS PAGE & COMPONENTS
+   ============================================================ */
+
+/* ───────── AVATAR ───────── */
+.adm-avatar-img {
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+.adm-avatar-text {
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 800;
+}
+
+/* ───────── CONFIRM MODAL ───────── */
+.adm-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.adm-confirm-modal {
+  background: var(--card);
+  border-radius: 20px;
+  padding: 28px 32px;
+  width: 360px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border);
+  animation: adm-fadein 0.2s ease;
+}
+.adm-confirm-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.adm-confirm-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+.adm-confirm-msg {
+  margin: 0 0 24px;
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.6;
+}
+.adm-confirm-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+.adm-btn-cancel {
+  padding: 8px 20px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card2);
+  color: var(--text2);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+}
+.adm-btn-confirm {
+  padding: 8px 20px;
+  border-radius: 10px;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+}
+
+/* ───────── USER DRAWER EXTENSIONS ───────── */
+.user-drawer-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  background: var(--card);
+  z-index: 1;
+}
+.user-drawer-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+.user-drawer-close {
+  border: none;
+  background: var(--card2);
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text2);
+}
+.user-drawer-section {
+  padding: 24px;
+  border-bottom: 1px solid var(--border);
+}
+.user-drawer-section-sm {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+}
+.user-drawer-profile {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.user-drawer-name-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.user-drawer-name {
+  font-weight: 800;
+  font-size: 17px;
+  color: var(--text);
+}
+.user-drawer-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.user-drawer-info-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.user-drawer-info-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: var(--card2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.user-drawer-info-label {
+  font-size: 10px;
+  color: var(--text2);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.user-drawer-info-val {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.user-drawer-locked-alert {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-top: 12px;
+}
+.user-drawer-locked-text {
+  font-size: 11px;
+  font-weight: 700;
+  color: #dc2626;
+  margin-bottom: 2px;
+}
+.user-drawer-locked-sub {
+  font-size: 11px;
+  color: #dc2626;
+  opacity: 0.8;
+}
+.user-drawer-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+.user-drawer-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.user-drawer-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.user-drawer-btn:hover {
+  filter: brightness(0.95);
+}
+.user-drawer-empty {
+  text-align: center;
+  padding: 24px 0;
+  color: var(--text2);
+  font-size: 13px;
+}
+.user-drawer-order-card {
+  background: var(--card2);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  border: 1px solid var(--border);
+}
+.user-drawer-order-top {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.user-drawer-order-id {
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 13px;
+}
+.user-drawer-order-total {
+  font-weight: 700;
+  color: #10b981;
+  font-size: 13px;
+}
+.user-drawer-order-badges {
+  display: flex;
+  gap: 6px;
+}
+.user-drawer-order-date {
+  font-size: 11px;
+  color: var(--text2);
+  margin-top: 6px;
+}
+
+/* ───────── USERS PAGE SPECIFIC ───────── */
+.adm-header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.adm-stats-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.adm-stat-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.adm-stat-value-lg {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text);
+}
+.adm-filter-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+  align-items: center;
+  flex-wrap: wrap;
+  background: var(--card);
+  border-radius: 14px;
+  padding: 14px 18px;
+  border: 1px solid var(--border);
+}
+.adm-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--card2);
+  border-radius: 10px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  flex: 1;
+  min-width: 200px;
+}
+.adm-search-input {
+  border: none;
+  background: transparent;
+  outline: none;
+  color: var(--text);
+  font-size: 13px;
+  width: 100%;
+  font-family: inherit;
+}
+.adm-search-clear {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+  color: var(--text2);
+}
+.adm-role-tabs {
+  display: flex;
+  background: var(--card2);
+  border-radius: 10px;
+  padding: 3px;
+  border: 1px solid var(--border);
+}
+.adm-role-btn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  background: transparent;
+  color: var(--text2);
+  transition: all 0.2s;
+}
+.adm-role-btn.active {
+  background: var(--accent);
+  color: white;
+}
+.adm-sort-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--card2);
+  border-radius: 10px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+.adm-sort-select {
+  border: none;
+  background: transparent;
+  outline: none;
+  color: var(--text);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  appearance: none;
+  padding-right: 16px;
+}
+.adm-sort-select option {
+  background: var(--card);
+}
+.adm-sort-icon {
+  position: absolute;
+  right: 12px;
+  pointer-events: none;
+}
+
+/* ───────── TABLE CELLS & TAGS ───────── */
+.adm-user-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.adm-user-cell-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.adm-cell-orders {
+  font-weight: 700;
+  color: var(--text);
+  font-size: 14px;
+}
+.adm-tag-google {
+  background: #fef3c7;
+  color: #d97706;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 20px;
+}
+.adm-tag-local {
+  background: #e0e7ff;
+  color: #4f46e5;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 20px;
+}
+.adm-tag-google-sm {
+  background: #fef3c7;
+  color: #d97706;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+/* ───────── ACTION ICON BTN ───────── */
+.adm-action-icon-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}

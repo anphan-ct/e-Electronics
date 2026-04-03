@@ -18,6 +18,7 @@ exports.getStats = async (req, res) => {
     const [totalProducts]= await query("SELECT COUNT(*) as count FROM products");
     const [pendingOrders]= await query("SELECT COUNT(*) as count FROM orders WHERE status='pending'");
     const [paidOrders]   = await query("SELECT COUNT(*) as count FROM orders WHERE payment_status='paid'");
+    const [lockedNow] = await query("SELECT COUNT(*) as count FROM users WHERE status = 'locked' OR locked_until > NOW()");
     res.json({
       revenue:       parseFloat(totalRevenue.revenue) || 0,
       totalOrders:   totalOrders.count,
@@ -36,7 +37,7 @@ exports.getRevenueChart = async (req, res) => {
   try {
     let rows = [];
 
-    // 👉 CUSTOM
+    // CUSTOM
     if (range === "custom") {
       if (!from || !to) {
         return res.status(400).json({ message: "Thiếu ngày bắt đầu hoặc kết thúc" });
@@ -62,7 +63,7 @@ exports.getRevenueChart = async (req, res) => {
 
     }
 
-    // 👉 NGÀY HIỆN TẠI
+    // NGÀY HIỆN TẠI
     else if (range === "day") {
       rows = await query(`
         SELECT DATE(created_at) as date,
@@ -75,7 +76,7 @@ exports.getRevenueChart = async (req, res) => {
       `);
     }
 
-    // 👉 TUẦN HIỆN TẠI
+    // TUẦN HIỆN TẠI
     else if (range === "week") {
       rows = await query(`
         SELECT DATE(created_at) as date,
@@ -89,7 +90,7 @@ exports.getRevenueChart = async (req, res) => {
       `);
     }
 
-    // 👉 THÁNG HIỆN TẠI
+    // THÁNG HIỆN TẠI
     else if (range === "month") {
       rows = await query(`
         SELECT DATE(created_at) as date,
@@ -145,11 +146,13 @@ exports.getTopProducts = async (req, res) => {
 exports.getUsers = async (req, res) => {
   try {
     const rows = await query(`
-      SELECT u.id, u.name, u.email, u.role, u.created_at,
+      SELECT u.id, u.name, u.email, u.role, u.status, u.created_at, 
+             u.login_type, u.avatar, u.locked_until, u.login_attempts,
              COUNT(o.id) as total_orders,
              COALESCE(SUM(CASE WHEN o.payment_status='paid' THEN o.total ELSE 0 END),0) as total_spent
       FROM users u LEFT JOIN orders o ON u.id = o.user_id
-      GROUP BY u.id ORDER BY u.created_at DESC
+      GROUP BY u.id 
+      ORDER BY u.created_at DESC
     `);
     res.json(rows);
   } catch (err) { res.status(500).json({ message: "Lỗi server", error: err.message }); }
@@ -196,6 +199,105 @@ exports.getPaymentStats = async (req, res) => {
       SELECT payment_method, payment_status, COUNT(*) as count, COALESCE(SUM(total),0) as total
       FROM orders GROUP BY payment_method, payment_status
     `);
+    res.json(rows);
+  } catch (err) { res.status(500).json({ message: "Lỗi server", error: err.message }); }
+};
+
+// GET /api/dashboard/users/:id  — Chi tiết 1 user
+exports.getUserById = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [user] = await query(`
+      SELECT u.id, u.name, u.email, u.role, u.created_at, u.status,
+             u.login_type, u.avatar, u.login_attempts, u.locked_until,
+             COUNT(o.id) as total_orders,
+             COALESCE(SUM(CASE WHEN o.payment_status='paid' THEN o.total ELSE 0 END),0) as total_spent
+      FROM users u
+      LEFT JOIN orders o ON u.id = o.user_id
+      WHERE u.id = ?
+      GROUP BY u.id
+    `, [id]);
+    if (!user) return res.status(404).json({ message: "Không tìm thấy user" });
+    res.json(user);
+  } catch (err) { res.status(500).json({ message: "Lỗi server", error: err.message }); }
+};
+ 
+// PUT /api/dashboard/users/:id/role  — Đổi role user
+exports.updateUserRole = async (req, res) => {
+  const { id } = req.params;
+  const { role } = req.body;
+  if (!["user", "admin"].includes(role))
+    return res.status(400).json({ message: "Role không hợp lệ" });
+  try {
+    await query("UPDATE users SET role=? WHERE id=?", [role, id]);
+    res.json({ message: "Cập nhật role thành công" });
+  } catch (err) { res.status(500).json({ message: "Lỗi server", error: err.message }); }
+};
+ 
+// DELETE /api/dashboard/users/:id  — Xóa user
+exports.deleteUser = async (req, res) => {
+  const { id } = req.params;
+  // Không cho xóa chính mình
+  if (String(id) === String(req.user.id))
+    return res.status(400).json({ message: "Không thể tự xóa chính mình!" });
+  try {
+    await query("DELETE FROM users WHERE id=?", [id]);
+    res.json({ message: "Xóa user thành công" });
+  } catch (err) { res.status(500).json({ message: "Lỗi server", error: err.message }); }
+};
+ 
+// PUT /api/dashboard/users/:id/reset-password  — Reset mật khẩu
+exports.resetUserPassword = async (req, res) => {
+  const { id } = req.params;
+  const { newPassword } = req.body;
+  const bcrypt = require("bcrypt");
+
+  // Kiểm tra nếu admin không nhập hoặc nhập quá ngắn
+  if (!newPassword || newPassword.length < 6) {
+    return res.status(400).json({ message: "Mật khẩu mới phải có ít nhất 6 ký tự" });
+  }
+
+  try {
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await query("UPDATE users SET password=?, login_attempts=0, locked_until=NULL WHERE id=?", [hashed, id]);
+    res.json({ message: "Cập nhật mật khẩu mới thành công" });
+  } catch (err) { 
+    res.status(500).json({ message: "Lỗi server", error: err.message }); 
+  }
+};
+ 
+// PUT /api/dashboard/users/:id/unlock  — Mở khóa tài khoản
+exports.unlockUser = async (req, res) => {
+  const { id } = req.params;
+  try {
+    await query("UPDATE users SET status='active', login_attempts=0, locked_until=NULL, last_failed_at=NULL WHERE id=?", [id]);
+    res.json({ message: "Mở khóa tài khoản thành công" });
+  } catch (err) { res.status(500).json({ message: "Lỗi server", error: err.message }); }
+};
+
+// PUT /api/dashboard/users/:id/lock
+// PUT /api/dashboard/users/:id/lock  — Khóa tài khoản thủ công
+exports.lockUser = async (req, res) => {
+  const { id } = req.params;
+  if (String(id) === String(req.user.id)) {
+    return res.status(400).json({ message: "Không thể tự khóa tài khoản của chính mình!" });
+  }
+  try {
+    await query("UPDATE users SET status='locked' WHERE id=?", [id]);
+    res.json({ message: "Khóa tài khoản thành công" });
+  } catch (err) { res.status(500).json({ message: "Lỗi server", error: err.message }); }
+};
+ 
+// GET /api/dashboard/users/:id/orders  — Đơn hàng của user
+exports.getUserOrders = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const rows = await query(`
+      SELECT o.id, o.total, o.status, o.payment_status, o.payment_method,
+             o.shipping_name, o.shipping_phone, o.created_at
+      FROM orders o WHERE o.user_id = ?
+      ORDER BY o.created_at DESC
+    `, [id]);
     res.json(rows);
   } catch (err) { res.status(500).json({ message: "Lỗi server", error: err.message }); }
 };

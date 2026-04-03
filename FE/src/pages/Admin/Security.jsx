@@ -7,18 +7,18 @@ import { LoadingSpinner } from "../../layouts/AdminUI";
 import {
   ShieldAlert, ShieldCheck, Lock, Unlock, Monitor,
   Smartphone, Tablet, AlertTriangle, RefreshCw,
-  CheckCircle, XCircle, Ban, Activity,
+  CheckCircle, XCircle, Ban, Activity, X
 } from "lucide-react";
 
 const auth = () => ({ Authorization: `Bearer ${localStorage.getItem("token")}` });
-const API  = "http://localhost:5000/api/security";
+const API = "http://localhost:5000/api/security";
 
 // ── Badge trạng thái log ──────────────────────────────────
 function StatusBadge({ status }) {
   const map = {
     success: { label: "Thành công", bg: "#d1fae5", color: "#059669", Icon: CheckCircle },
-    failed:  { label: "Thất bại",   bg: "#fee2e2", color: "#dc2626", Icon: XCircle    },
-    locked:  { label: "Bị khóa",   bg: "#fef3c7", color: "#d97706", Icon: Ban        },
+    failed: { label: "Thất bại", bg: "#fee2e2", color: "#dc2626", Icon: XCircle },
+    locked: { label: "Bị khóa", bg: "#fef3c7", color: "#d97706", Icon: Ban },
   };
   const s = map[status] || { label: status, bg: "#f3f4f6", color: "#6b7280", Icon: Activity };
   return (
@@ -32,17 +32,17 @@ function StatusBadge({ status }) {
 
 // ── Icon thiết bị ─────────────────────────────────────────
 function DeviceIcon({ type }) {
-  if (type === "mobile")  return <Smartphone size={14} color="var(--text2)" />;
-  if (type === "tablet")  return <Tablet     size={14} color="var(--text2)" />;
+  if (type === "mobile") return <Smartphone size={14} color="var(--text2)" />;
+  if (type === "tablet") return <Tablet size={14} color="var(--text2)" />;
   return <Monitor size={14} color="var(--text2)" />;
 }
 
 // ── Alert severity badge ──────────────────────────────────
 function SeverityBadge({ severity }) {
   const map = {
-    high:   { label: "Cao",    bg: "#fee2e2", color: "#dc2626" },
-    medium: { label: "Trung",  bg: "#fef3c7", color: "#d97706" },
-    low:    { label: "Thấp",   bg: "#d1fae5", color: "#059669" },
+    high: { label: "Cao", bg: "#fee2e2", color: "#dc2626" },
+    medium: { label: "Trung", bg: "#fef3c7", color: "#d97706" },
+    low: { label: "Thấp", bg: "#d1fae5", color: "#059669" },
   };
   const s = map[severity] || map.low;
   return (
@@ -59,14 +59,14 @@ function SeverityBadge({ severity }) {
 export default function Security() {
   const { searchQuery = "" } = useOutletContext() || {};
 
-  const [activeTab,  setActiveTab]  = useState("logs");
-  const [logs,       setLogs]       = useState([]);
-  const [alerts,     setAlerts]     = useState([]);
-  const [stats,      setStats]      = useState(null);
-  const [loading,    setLoading]    = useState(true);
-  const [total,      setTotal]      = useState(0);
+  const [activeTab, setActiveTab] = useState("logs");
+  const [logs, setLogs] = useState([]);
+  const [alerts, setAlerts] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
   const [statusFilter, setStatusFilter] = useState("all");
-  const [unlocking,  setUnlocking]  = useState(null);
+  const [unlocking, setUnlocking] = useState(null);
 
   // ── Fetch data ────────────────────────────────────────────
   const fetchLogs = async (status = statusFilter) => {
@@ -100,12 +100,12 @@ export default function Security() {
     try {
       const res = await axios.get(`${API}/stats`, { headers: auth() });
       setStats(res.data);
-    } catch {}
+    } catch { }
   };
 
   useEffect(() => {
     fetchStats();
-    if (activeTab === "logs")   fetchLogs();
+    if (activeTab === "logs") fetchLogs();
     if (activeTab === "alerts") fetchAlerts();
   }, [activeTab]);
 
@@ -130,6 +130,21 @@ export default function Security() {
     }
   };
 
+  // ── Tắt cảnh báo thủ công ────────────────────────────────
+  const handleDismissAlert = async (alert, indexToDismiss) => {
+    // 1. Cập nhật UI ngay lập tức cho mượt
+    setAlerts((prevAlerts) => prevAlerts.filter((_, index) => index !== indexToDismiss));
+    
+    // 2. Lưu trạng thái tắt vào Database
+    try {
+      await axios.post(`${API}/alerts/dismiss`, { alertKey: alert.id }, { headers: auth() });
+    } catch (error) {
+      toast.error("Lỗi kết nối khi tắt cảnh báo");
+      // Phục hồi lại data nếu API lỗi
+      fetchAlerts(); 
+    }
+  };
+
   // ── Format thời gian ──────────────────────────────────────
   const formatTime = (dt) => {
     if (!dt) return "—";
@@ -140,18 +155,18 @@ export default function Security() {
   };
 
   const FILTER_OPTS = [
-    { val: "all",     label: "Tất cả" },
+    { val: "all", label: "Tất cả" },
     { val: "success", label: "Thành công" },
-    { val: "failed",  label: "Thất bại" },
-    { val: "locked",  label: "Bị khóa" },
+    { val: "failed", label: "Thất bại" },
+    { val: "locked", label: "Bị khóa" },
   ];
 
   // ── Stats cards ───────────────────────────────────────────
   const STATS = stats ? [
-    { label: "Tổng hôm nay",    value: stats.today?.total     || 0, color: "#6366f1", Icon: Activity      },
-    { label: "Thành công",      value: stats.today?.success   || 0, color: "#10b981", Icon: CheckCircle   },
-    { label: "Thất bại",        value: stats.today?.failed    || 0, color: "#ef4444", Icon: XCircle       },
-    { label: "Tài khoản khóa",  value: stats.lockedAccounts   || 0, color: "#f59e0b", Icon: Lock          },
+    { label: "Tổng hôm nay", value: stats.today?.total || 0, color: "#6366f1", Icon: Activity },
+    { label: "Thành công", value: stats.today?.success || 0, color: "#10b981", Icon: CheckCircle },
+    { label: "Thất bại", value: stats.today?.failed || 0, color: "#ef4444", Icon: XCircle },
+    { label: "Tài khoản khóa", value: stats.lockedAccounts || 0, color: "#f59e0b", Icon: Lock },
   ] : [];
 
   return (
@@ -195,7 +210,7 @@ export default function Security() {
       {/* ── TABS ── */}
       <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
         {[
-          { id: "logs",   label: "Log đăng nhập",  Icon: Activity    },
+          { id: "logs", label: "Log đăng nhập", Icon: Activity },
           { id: "alerts", label: `Cảnh báo${alerts.length ? ` (${alerts.length})` : ""}`, Icon: ShieldAlert },
         ].map(tab => (
           <button key={tab.id}
@@ -267,8 +282,10 @@ export default function Security() {
                         </td>
                         <td><StatusBadge status={log.status} /></td>
                         <td>
-                          <span style={{ fontSize: "11px", color: "var(--text2)", maxWidth: 200, display: "block",
-                            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          <span style={{
+                            fontSize: "11px", color: "var(--text2)", maxWidth: 200, display: "block",
+                            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"
+                          }}>
                             {log.fail_reason || "—"}
                           </span>
                         </td>
@@ -301,29 +318,58 @@ export default function Security() {
               {alerts.map((alert, i) => {
                 // ── Tinh chỉnh màu sắc và Icon dựa trên mức độ ──
                 const isHigh = alert.severity === "high";
-                const isMed  = alert.severity === "medium";
-                const isLow  = alert.severity === "low";
+                const isMed = alert.severity === "medium";
+                const isLow = alert.severity === "low";
 
                 const config = {
-                  color: isHigh ? "#ef4444" : isMed ? "#f59e0b" : "#10b981", // Đỏ - Cam - Xanh lá
-                  bg:    isHigh ? "rgba(239,68,68,0.05)" : isMed ? "rgba(245,158,11,0.05)" : "rgba(16,185,129,0.05)",
-                  Icon:  isLow  ? ShieldCheck : AlertTriangle // Thấp dùng Khiên, còn lại dùng Cảnh báo
+                  color: isHigh ? "#ef4444" : isMed ? "#f59e0b" : "#10b981",
+                  bg: isHigh ? "rgba(239,68,68,0.05)" : isMed ? "rgba(245,158,11,0.05)" : "rgba(16,185,129,0.05)",
+                  Icon: isLow ? ShieldCheck : AlertTriangle
                 };
 
                 return (
-                  <div key={i} className="adm-card"
+                  <div key={i} className="adm-card position-relative"
                     style={{
                       borderLeft: `4px solid ${config.color}`,
-                      background: config.bg, // Thêm màu nền nhạt để phân biệt các loại alert
-                      padding: "16px 20px",
+                      background: config.bg,
+                      padding: "16px 40px 16px 20px",
                     }}>
+
+                    {/* NÚT TẮT CẢNH BÁO */}
+                    <button
+                      onClick={() => handleDismissAlert(alert, i)}
+                      className="position-absolute d-flex align-items-center justify-content-center"
+                      style={{
+                        top: "12px",
+                        right: "12px",
+                        width: "24px",
+                        height: "24px",
+                        background: "transparent",
+                        border: "none",
+                        borderRadius: "50%",
+                        cursor: "pointer",
+                        color: "var(--text2)",
+                        transition: "all 0.2s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = "var(--text)";
+                        e.currentTarget.style.background = "rgba(0,0,0,0.08)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = "var(--text2)";
+                        e.currentTarget.style.background = "transparent";
+                      }}
+                      title="Bỏ qua cảnh báo này"
+                    >
+                      <X size={16} />
+                    </button>
+
                     <div className="d-flex align-items-start justify-content-between gap-3">
                       <div className="d-flex align-items-start gap-3 flex-grow-1">
-                        {/* Sử dụng Icon động theo cấu hình */}
                         <config.Icon size={20}
                           color={config.color}
                           style={{ flexShrink: 0, marginTop: 2 }} />
-                        
+
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div className="d-flex align-items-center gap-2 mb-1 flex-wrap">
                             <span style={{ fontWeight: 700, color: "var(--text)", fontSize: 14 }}>
@@ -335,21 +381,22 @@ export default function Security() {
                             {alert.message}
                           </div>
 
-                          {/* Chi tiết phụ giữ nguyên màu sắc cũ hoặc chỉnh nhẹ cho đồng nhất */}
                           <div style={{
                             display: "flex", flexWrap: "wrap", gap: "8px 20px",
                             fontSize: 11, color: "var(--text2)"
                           }}>
-                            {/* ... (Các phần detail giữ nguyên) ... */}
+                            {alert.detail?.ip && <span>IP: {alert.detail.ip}</span>}
+                            {alert.detail?.time && <span>Thời gian: {formatTime(alert.detail.time)}</span>}
                           </div>
                         </div>
                       </div>
 
-                      {/* Nút Mở khóa (chỉ hiện khi bị khóa thực sự) */}
                       {alert.type === "locked_account" && alert.detail?.userId && (
                         <button className="adm-filter-btn d-flex align-items-center gap-1"
                           disabled={unlocking === alert.detail.userId}
-                          onClick={() => handleUnlock(alert.detail.userId, alert.detail.email)}>
+                          onClick={() => handleUnlock(alert.detail.userId, alert.detail.email)}
+                          style={{ marginTop: "4px" }} 
+                        >
                           {unlocking === alert.detail.userId ? "Đang mở..." : <><Unlock size={13} /> Mở khóa</>}
                         </button>
                       )}
