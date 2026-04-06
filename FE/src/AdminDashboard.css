@@ -1514,3 +1514,347 @@
   justify-content: center;
   transition: all 0.15s;
 }
+
+/* =========================================================
+   MODAL & BIỂU MẪU (Dùng cho trang Products và các trang khác)
+   ========================================================= */
+
+/* Lớp phủ mờ phía sau Modal */
+.adm-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0,0,0,0.6);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+/* Nội dung khối Modal */
+.adm-modal-content {
+  background-color: #fff;
+  padding: 24px;
+  border-radius: 12px;
+  width: 450px;
+  max-width: 90%;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.adm-modal-content.large {
+  width: 500px;
+}
+
+/* Tiêu đề Modal */
+.adm-modal-header {
+  margin-top: 0;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+}
+
+/* Nhãn (Label) trong form */
+.adm-form-label {
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  color: #333;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+/* Ô nhập liệu (Input/Textarea) */
+.adm-form-input {
+  margin-top: 6px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.adm-form-input:focus {
+  border-color: #2196F3;
+}
+textarea.adm-form-input {
+  resize: vertical;
+}
+
+/* Các nhóm form (flex row) */
+.adm-form-group-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.adm-form-group-row .adm-form-label {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+/* Nút bấm chung */
+.adm-btn {
+  padding: 8px 16px;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: opacity 0.2s;
+}
+.adm-btn:hover { opacity: 0.8; }
+.adm-btn-primary { background-color: #4CAF50; }
+.adm-btn-secondary { background-color: #9E9E9E; }
+.adm-btn-info { background-color: #2196F3; }
+
+/* Nút Hành động trên từng thẻ sản phẩm */
+.adm-action-actions-wrap {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid #eee;
+}
+.adm-action-btn {
+  flex: 1;
+  padding: 6px 0;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  transition: opacity 0.2s;
+}
+.adm-action-btn:hover { opacity: 0.8; }
+.adm-action-detail { background-color: #607D8B; }
+.adm-action-edit { background-color: #2196F3; }
+.adm-action-delete { background-color: #F44336; }
+
+/* Các phần tử cho Modal Chi tiết sản phẩm */
+.adm-detail-wrap {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 15px;
+}
+.adm-detail-img {
+  width: 150px;
+  height: 150px;
+  object-fit: contain;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 5px;
+}
+.adm-detail-info {
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.adm-detail-info p {
+  margin: 4px 0;
+}
+.adm-detail-desc {
+  margin: 5px 0;
+  color: #555;
+  background-color: #f9f9f9;
+  padding: 10px;
+  border-radius: 6px;
+}
+.adm-detail-specs {
+  background-color: #282c34;
+  color: #abb2bf;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  overflow-x: auto;
+  margin: 5px 0;
+}
+
+
+/* =========================================================
+   ADMIN PRODUCT DETAIL (TRANG CHI TIẾT SẢN PHẨM HIỆN ĐẠI)
+   ========================================================= */
+
+/* Layout tổng */
+.apd-wrapper {
+  padding: 24px;
+  transition: all 0.3s ease;
+}
+
+/* Thẻ (Card) chứa nội dung chính */
+.apd-card {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 40px;
+  padding: 32px;
+  border-radius: 24px;
+  transition: all 0.3s ease;
+}
+.apd-wrapper.light .apd-card {
+  background: #ffffff;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.06);
+}
+.apd-wrapper.dark .apd-card {
+  background: #1e1e2d; /* Màu nền Dark Mode sang trọng */
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  border: 1px solid #2b2b40;
+}
+
+/* Khu vực hình ảnh */
+.apd-img-container {
+  flex: 1 1 350px;
+  max-width: 450px;
+  border-radius: 20px;
+  padding: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+.apd-wrapper.light .apd-img-container {
+  background: #f4f6f8;
+}
+.apd-wrapper.dark .apd-img-container {
+  background: #151521;
+}
+.apd-img {
+  max-width: 100%;
+  max-height: 400px;
+  object-fit: contain;
+  border-radius: 8px;
+  filter: drop-shadow(0 15px 25px rgba(0,0,0,0.1));
+}
+
+/* Khu vực thông tin */
+.apd-info {
+  flex: 2 1 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.apd-title {
+  font-size: 32px;
+  font-weight: 800;
+  margin: 0;
+  line-height: 1.3;
+  transition: color 0.3s ease;
+}
+.apd-wrapper.light .apd-title { color: #1f2937; }
+.apd-wrapper.dark .apd-title { color: #f9fafb; }
+
+.apd-price {
+  font-size: 30px;
+  font-weight: 800;
+  transition: color 0.3s ease;
+}
+.apd-wrapper.light .apd-price { color: #2563eb; } /* Primary Blue */
+.apd-wrapper.dark .apd-price { color: #60a5fa; } /* Lighter Blue for Dark Mode */
+
+/* Badges (Nhãn) */
+.apd-badges {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.apd-badge {
+  padding: 8px 16px;
+  border-radius: 50px;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+.apd-wrapper.light .apd-badge {
+  background: #e0e7ff;
+  color: #4f46e5;
+}
+.apd-wrapper.dark .apd-badge {
+  background: rgba(79, 70, 229, 0.2);
+  color: #a5b4fc;
+}
+.apd-badge.secondary {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+.apd-wrapper.dark .apd-badge.secondary {
+  background: #2b2b40;
+  color: #9ca3af;
+}
+
+/* Các section phụ (Mô tả, Thông số) */
+.apd-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.apd-wrapper.light .apd-section-title { color: #6b7280; }
+.apd-wrapper.dark .apd-section-title { color: #9ca3af; }
+
+.apd-desc {
+  line-height: 1.8;
+  font-size: 15px;
+  padding: 20px;
+  border-radius: 16px;
+  border-left: 4px solid #2563eb;
+  transition: all 0.3s ease;
+}
+.apd-wrapper.light .apd-desc {
+  background: #f9fafb;
+  color: #374151;
+}
+.apd-wrapper.dark .apd-desc {
+  background: #151521;
+  color: #d1d5db;
+  border-left-color: #3b82f6;
+}
+
+/* Specs dạng Grid thay vì Table */
+.apd-specs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+}
+.apd-spec-item {
+  padding: 16px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.apd-spec-item:hover {
+  transform: translateY(-3px);
+}
+.apd-wrapper.light .apd-spec-item {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+.apd-wrapper.light .apd-spec-item:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+.apd-wrapper.dark .apd-spec-item {
+  background: #151521;
+  border: 1px solid #2b2b40;
+}
+.apd-wrapper.dark .apd-spec-item:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.apd-spec-key {
+  font-size: 11px;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.apd-wrapper.light .apd-spec-key { color: #6b7280; }
+.apd-wrapper.dark .apd-spec-key { color: #9ca3af; }
+
+.apd-spec-value {
+  font-size: 15px;
+  font-weight: 600;
+}
+.apd-wrapper.light .apd-spec-value { color: #111827; }
+.apd-wrapper.dark .apd-spec-value { color: #f3f4f6; }

@@ -301,3 +301,60 @@ exports.getUserOrders = async (req, res) => {
     res.json(rows);
   } catch (err) { res.status(500).json({ message: "Lỗi server", error: err.message }); }
 };
+
+
+// ==============================================================================
+// CÁC API QUẢN LÝ SẢN PHẨM (CRUD)
+// ==============================================================================
+
+// GET /api/dashboard/products/:id — Xem chi tiết 1 sản phẩm
+exports.getProductById = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [product] = await query("SELECT * FROM products WHERE id = ?", [id]);
+    if (!product) return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
+    
+    // Parse JSON specs
+    product.specs = product.specs ? JSON.parse(product.specs) : {};
+    res.json(product);
+  } catch (err) { res.status(500).json({ message: "Lỗi server", error: err.message }); }
+};
+
+// POST /api/dashboard/products — Thêm sản phẩm mới
+exports.createProduct = async (req, res) => {
+  const { name, description, price, image, category_id, specs } = req.body;
+  try {
+    // specs từ FE gửi lên có thể là object, cần stringify để lưu vào DB
+    const specsJson = specs ? (typeof specs === 'string' ? specs : JSON.stringify(specs)) : null;
+    
+    const result = await query(
+      "INSERT INTO products (name, description, price, image, category_id, specs) VALUES (?, ?, ?, ?, ?, ?)",
+      [name, description, price, image, category_id, specsJson]
+    );
+    res.status(201).json({ message: "Thêm sản phẩm thành công", id: result.insertId });
+  } catch (err) { res.status(500).json({ message: "Lỗi server", error: err.message }); }
+};
+
+// PUT /api/dashboard/products/:id — Cập nhật sản phẩm
+exports.updateProduct = async (req, res) => {
+  const { id } = req.params;
+  const { name, description, price, image, category_id, specs } = req.body;
+  try {
+    const specsJson = specs ? (typeof specs === 'string' ? specs : JSON.stringify(specs)) : null;
+
+    await query(
+      "UPDATE products SET name=?, description=?, price=?, image=?, category_id=?, specs=? WHERE id=?",
+      [name, description, price, image, category_id, specsJson, id]
+    );
+    res.json({ message: "Cập nhật sản phẩm thành công" });
+  } catch (err) { res.status(500).json({ message: "Lỗi server", error: err.message }); }
+};
+
+// DELETE /api/dashboard/products/:id — Xóa sản phẩm
+exports.deleteProduct = async (req, res) => {
+  const { id } = req.params;
+  try {
+    await query("DELETE FROM products WHERE id=?", [id]);
+    res.json({ message: "Xóa sản phẩm thành công" });
+  } catch (err) { res.status(500).json({ message: "Lỗi server", error: err.message }); }
+};

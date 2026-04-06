@@ -8,6 +8,7 @@ import Users from "./Users";
 import AdminChat from "./AdminChat";
 import Security from "./Security";
 import UserDetail from "./UserDetail";
+import AdminProductDetail from "./AdminProductDetail";
 
 export default function AdminDashBoard() {
   // Logic kiểm tra quyền admin của bạn
@@ -25,6 +26,7 @@ export default function AdminDashBoard() {
         {/* Các đường dẫn con khác */}
         <Route path="orders" element={<Orders />} />
         <Route path="products" element={<Products />} />
+        <Route path="products/:id" element={<AdminProductDetail />} />
         <Route path="users" element={<Users />} />
         <Route path="users/:id" element={<UserDetail />} />
         <Route path="chat" element={<AdminChat />} />
