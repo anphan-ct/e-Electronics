@@ -180,10 +180,37 @@ exports.updateOrderStatus = async (req, res) => {
   } catch (err) { res.status(500).json({ message: "Lỗi server", error: err.message }); }
 };
 
+// GET /api/dashboard/product-categories  — Lấy danh sách ID danh mục sản phẩm
+exports.getProductCategories = async (req, res) => {
+  try {
+    // Lấy ra các ID danh mục duy nhất đang tồn tại trong products
+    const rows = await query("SELECT DISTINCT category_id FROM products WHERE category_id IS NOT NULL ORDER BY category_id ASC");
+    res.json(rows.map(r => r.category_id));
+  } catch (err) { res.status(500).json({ message: "Lỗi server", error: err.message }); }
+};
+
 // GET /api/dashboard/products
 exports.getProducts = async (req, res) => {
+  const { search, category_id } = req.query;
   try {
-    const rows = await query("SELECT * FROM products ORDER BY created_at DESC");
+    let sql = "SELECT * FROM products WHERE 1=1";
+    let params = [];
+
+    // Nếu FE gửi từ khóa tìm kiếm
+    if (search) {
+      sql += " AND (name LIKE ? OR description LIKE ? OR id LIKE ?)";
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    }
+
+    // Nếu FE gửi ID danh mục cần lọc
+    if (category_id) {
+      sql += " AND category_id = ?";
+      params.push(category_id);
+    }
+
+    sql += " ORDER BY created_at DESC";
+
+    const rows = await query(sql, params);
     const formatted = rows.map(p => ({
       ...p,
       specs: (() => { try { return p.specs ? JSON.parse(p.specs) : {}; } catch { return {}; } })()

@@ -16,7 +16,7 @@ function AdminChat() {
   const [targetUserName, setTargetUserName] = useState("");
   const scrollRef = useRef(null);
 
-  const admin = JSON.parse(localStorage.getItem("user"));
+  const admin = JSON.parse(localStorage.getItem("user") || "null");
 
   // --- GIỮ NGUYÊN LOGIC CŨ ---
   const formatTime = (dateInput) => {
@@ -98,7 +98,7 @@ function AdminChat() {
     } catch (err) { toast.error("Lỗi xóa tin nhắn"); }
   };
 
-  if (!admin || admin.role !== 'admin') return <div className="p-5 text-center">Truy cập bị từ chối</div>;
+  if (!admin || String(admin.role || "").toLowerCase() !== 'admin') return <div className="p-5 text-center">Truy cập bị từ chối</div>;
 
   // --- GIAO DIỆN MỚI ---
   return (

@@ -250,7 +250,7 @@ export default function Overview() {
   // Context từ AdminLayout (searchQuery — không dùng ở trang này)
   const outletCtx = useOutletContext() || {};
 
-  // ★ Hook riêng — chỉ gọi API tổng quan
+  // Hook riêng — chỉ gọi API tổng quan
   const {
     stats, revenueChart, recentOrders, topProducts, paymentStats,
     loading, chartLoading,
@@ -410,7 +410,7 @@ export default function Overview() {
           <div className="adm-section-header">
             <h3 className="adm-card-title">Đơn hàng gần đây</h3>
             <button className="adm-see-all-btn"
-              onClick={() => navigate("/admin/dashboard/orders")}>
+              onClick={() => navigate("/admin/orders")}>
               Xem tất cả <ChevronRight size={13} />
             </button>
           </div>

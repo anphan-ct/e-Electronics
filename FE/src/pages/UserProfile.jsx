@@ -2,7 +2,7 @@ import { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import { ThemeContext } from "../context/ThemeContext";
 import { useNavigate } from "react-router-dom";
-import { User, ShoppingBag, UserCircle, Edit3, Save, X, Lock, ShieldCheck, Eye, EyeOff } from "lucide-react";
+import { User, ShoppingBag, UserCircle, Edit3, Save, X, Lock, ShieldCheck, Eye, EyeOff, Star } from "lucide-react";
 import { toast } from "react-toastify";
 
 function UserProfile() {
@@ -172,7 +172,7 @@ function UserProfile() {
     } catch (err) {
       toast.error(err.response?.data?.message || "Đổi mật khẩu thất bại");
     } finally {
-      setChanging(false); // ✅ thêm
+      setChanging(false);
     }
   };
 
@@ -182,7 +182,7 @@ function UserProfile() {
   return (
     <div className={`container py-5 min-vh-100 ${theme === "dark" ? "text-light" : "text-dark"}`}>
       <div className="row g-4">
-        {/* SIDEBAR GIỮ NGUYÊN */}
+        {/* SIDEBAR TÙY CHỈNH */}
         <div className="col-lg-4">
           <div className={`card border-0 shadow-lg p-4 text-center h-100 ${theme === "dark" ? "bg-dark border border-secondary" : "bg-white"}`} style={{ borderRadius: '25px' }}>
             <div className="mb-4 position-relative d-inline-block mx-auto">
@@ -193,12 +193,35 @@ function UserProfile() {
             <h4 className="fw-bold mb-1">{user.name}</h4>
             <p className={`mb-3 ${theme === 'dark' ? 'text-white-50' : 'text-muted'}`}>{user.email}</p>
             <div className="nav flex-column gap-2 mt-2">
+              
+              {/* Tab Thông tin cá nhân */}
               <button className={`nav-link border-0 py-3 px-4 fw-bold d-flex align-items-center justify-content-between rounded-4 transition-all ${activeTab === "info" ? "btn-auth-gradient text-white" : (theme === "dark" ? "text-light hover-dark" : "text-dark border")}`} onClick={() => { setActiveTab("info"); setIsEditing(false); }}>
                 <div className="d-flex align-items-center"><UserCircle size={20} className="me-3" /> Thông tin cá nhân</div>
               </button>
+              
+              {/* Tab Lịch sử mua hàng */}
               <button className={`nav-link border-0 py-3 px-4 fw-bold d-flex align-items-center justify-content-between rounded-4 transition-all ${activeTab === "orders" ? "btn-auth-gradient text-white" : (theme === "dark" ? "text-light hover-dark" : "text-dark border")}`} onClick={() => setActiveTab("orders")}>
                 <div className="d-flex align-items-center"><ShoppingBag size={20} className="me-3" /> Lịch sử mua hàng</div>
               </button>
+
+              <hr className={theme === "dark" ? "border-secondary" : "border-light-subtle"} />
+
+              {/* NÚT ĐIỂM THƯỞNG (MỚI) */}
+              <button 
+                className={`nav-link border-0 py-3 px-4 fw-bold d-flex align-items-center justify-content-between rounded-4 transition-all hover-lift`}
+                style={{ 
+                  background: theme === "dark" ? "rgba(245, 158, 11, 0.15)" : "linear-gradient(135deg, #fffbeb, #fef3c7)",
+                  color: "#d97706",
+                  border: theme === "dark" ? "1px solid rgba(245, 158, 11, 0.3)" : "1px solid #fde68a"
+                }} 
+                onClick={() => navigate("/loyalty")}
+              >
+                <div className="d-flex align-items-center">
+                  <Star size={20} className="me-3" fill="currentColor" /> 
+                  Điểm thưởng
+                </div>
+              </button>
+
             </div>
           </div>
         </div>
@@ -222,7 +245,6 @@ function UserProfile() {
 
                 <form onSubmit={handleUpdate}>
                   <div className="row g-4">
-                    {/* Các trường input tên và email giữ nguyên logic của bạn */}
                     <div className="col-12">
                       <div className={`p-4 rounded-4 border ${theme === 'dark' ? 'bg-secondary bg-opacity-25 border-secondary' : 'bg-light border-light-subtle'}`}>
                         <small className="d-block text-uppercase fw-bold opacity-50 mb-1" style={{ fontSize: '11px' }}>Họ và tên</small>
@@ -348,7 +370,6 @@ function UserProfile() {
                               <div className={`fw-bold fs-6 mb-1 ${theme === 'dark' ? 'text-white' : 'text-dark'}`}>
                                 {item.name}
                               </div>
-                              {/* Chỉnh màu chữ 'Số lượng' thành trắng mờ (text-white-50) trong dark mode */}
                               <div className={`small ${theme === 'dark' ? 'text-white-50' : 'text-muted'}`}>
                                 Số lượng: <span className={`fw-bold ${theme === 'dark' ? 'text-white' : 'text-dark'}`}>{item.quantity}</span>
                               </div>
@@ -374,6 +395,7 @@ function UserProfile() {
           </div>
         </div>
       </div>
+      
 
       {/* MODAL ĐỔI MẬT KHẨU */}
       {showPassModal && (

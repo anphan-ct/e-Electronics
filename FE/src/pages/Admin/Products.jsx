@@ -1,28 +1,50 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import { useOutletContext, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { LoadingSpinner } from "../../layouts/AdminUI";
+import { ThemeContext } from "../../context/ThemeContext";
+import { Filter, Plus, ChevronDown } from "lucide-react";
 
 const auth = () => ({ Authorization: `Bearer ${localStorage.getItem("token")}` });
 const API_URL = "http://localhost:5000/api/dashboard/products";
 
 export default function Products() {
   const { searchQuery = "" } = useOutletContext() || {};
-  const navigate = useNavigate(); // Dùng để chuyển trang
+  const navigate = useNavigate();
   const [products, setProducts] = useState(null);
 
-  // States quản lý Modal Form (Thêm/Sửa)
+  // 🆕 Lấy trạng thái Theme (Sáng/Tối)
+  const { theme } = useContext(ThemeContext);
+  const isDark = theme === "dark";
+
+  // States lọc theo danh mục
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
+
   const [showFormModal, setShowFormModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     name: "", price: "", description: "", image: "", category_id: "", specs: ""
   });
 
-  // ─── 1. FETCH DANH SÁCH ──────────────────────────────────────
+  // ─── 1. FETCH DANH SÁCH & DANH MỤC ────────────────────────────
+  const fetchCategories = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/categories`, { headers: auth() });
+      setCategories(res.data);
+    } catch (error) {
+      console.error("Lỗi lấy danh mục", error);
+    }
+  };
+
   const fetchProducts = async () => {
     try {
-      const res = await axios.get(API_URL, { headers: auth() });
+      const params = new URLSearchParams();
+      if (searchQuery) params.append("search", searchQuery);
+      if (selectedCategory) params.append("category_id", selectedCategory);
+
+      const res = await axios.get(`${API_URL}?${params.toString()}`, { headers: auth() });
       setProducts(res.data);
     } catch (error) {
       toast.error("Không thể tải danh sách sản phẩm");
@@ -30,8 +52,15 @@ export default function Products() {
   };
 
   useEffect(() => {
-    fetchProducts();
+    fetchCategories();
   }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchProducts();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, selectedCategory]);
 
   // ─── 2. XỬ LÝ FORM THÊM / SỬA ───────────────────────────────
   const handleInputChange = (e) => {
@@ -65,7 +94,6 @@ export default function Products() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Validate JSON
       let parsedSpecs = null;
       if (formData.specs.trim()) {
         try { 
@@ -86,6 +114,7 @@ export default function Products() {
       }
       closeFormModal();
       fetchProducts();
+      fetchCategories(); 
     } catch (error) {
       toast.error(error.response?.data?.message || "Có lỗi xảy ra khi lưu sản phẩm!");
     }
@@ -103,35 +132,93 @@ export default function Products() {
     }
   };
 
-  // ─── 4. XEM CHI TIẾT (CHUYỂN TRANG) ──────────────────────────
   const handleViewDetail = (id) => {
-    // Chuyển hướng sang trang chi tiết (AdminProductDetail)
     navigate(`/admin/products/${id}`);
   };
 
   if (!products) return <LoadingSpinner />;
 
-  const filtered = products.filter(p =>
-    !searchQuery || p.name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   return (
     <div className="animate-fade-in" style={{ position: "relative" }}>
       
-      {/* HEADER */}
-      <div className="adm-tab-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      {/* HEADER KÈM BỘ LỌC CATEGORY MỚI */}
+      <div className="adm-tab-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
         <div>
           <h2 className="adm-tab-title">Kho hàng</h2>
-          <p className="adm-tab-count">Tổng cộng {filtered.length} sản phẩm</p>
+          <p className="adm-tab-count" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>Đã tìm thấy {products.length} sản phẩm</p>
         </div>
-        <button onClick={() => openFormModal()} className="adm-btn adm-btn-primary">
-          + Thêm Sản Phẩm
-        </button>
+        
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          
+          {/* 🆕 Nút Dropdown Lọc Danh Mục (Modern UI) */}
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <Filter size={16} style={{ position: 'absolute', left: '12px', color: isDark ? '#9ca3af' : '#6b7280', pointerEvents: 'none' }} />
+            <select 
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              style={{
+                appearance: 'none',
+                WebkitAppearance: 'none',
+                padding: '9px 36px 9px 36px',
+                borderRadius: '8px',
+                border: `1px solid ${isDark ? '#4b5563' : '#e5e7eb'}`,
+                background: isDark ? '#374151' : '#ffffff',
+                color: isDark ? '#f3f4f6' : '#111827',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                outline: 'none',
+                transition: 'all 0.2s ease',
+                boxShadow: isDark ? 'none' : '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
+              }}
+              onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+              onBlur={(e) => e.target.style.borderColor = isDark ? '#4b5563' : '#e5e7eb'}
+            >
+              <option value="">Tất cả danh mục</option>
+              {categories.map(cat => (
+                <option key={cat} value={cat}>Danh mục: {cat}</option>
+              ))}
+            </select>
+            <ChevronDown size={16} style={{ position: 'absolute', right: '12px', color: isDark ? '#9ca3af' : '#6b7280', pointerEvents: 'none' }} />
+          </div>
+
+          {/* 🆕 Nút Thêm Sản Phẩm (Modern UI) */}
+          <button 
+            onClick={() => openFormModal()} 
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '9px 18px',
+              borderRadius: '8px',
+              border: 'none',
+              background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+              color: '#ffffff',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.3), 0 2px 4px -1px rgba(59, 130, 246, 0.2)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow = '0 6px 8px -1px rgba(59, 130, 246, 0.4), 0 4px 6px -1px rgba(59, 130, 246, 0.2)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(59, 130, 246, 0.3), 0 2px 4px -1px rgba(59, 130, 246, 0.2)';
+            }}
+          >
+            <Plus size={18} strokeWidth={2.5} />
+            Thêm Sản Phẩm
+          </button>
+
+        </div>
       </div>
 
       {/* PRODUCT GRID */}
       <div className="adm-products-grid">
-        {filtered.map(p => (
+        {products.map(p => (
           <div key={p.id} className="adm-product-card" style={{ display: 'flex', flexDirection: 'column' }}>
             <div className="adm-product-img-wrap" onClick={() => handleViewDetail(p.id)} style={{ cursor: 'pointer' }}>
               <img
@@ -150,7 +237,6 @@ export default function Products() {
               </div>
             </div>
 
-            {/* ACTION BUTTONS */}
             <div className="adm-action-actions-wrap">
               <button onClick={() => handleViewDetail(p.id)} className="adm-action-btn adm-action-detail">Chi tiết</button>
               <button onClick={() => openFormModal(p)} className="adm-action-btn adm-action-edit">Sửa</button>
@@ -159,9 +245,9 @@ export default function Products() {
           </div>
         ))}
 
-        {filtered.length === 0 && (
+        {products.length === 0 && (
           <div style={{ gridColumn:"1/-1", textAlign:"center", padding:48, color:"var(--text2)", fontSize:14 }}>
-            Không tìm thấy sản phẩm {searchQuery ? ` "${searchQuery}"` : ""}
+            Không tìm thấy sản phẩm phù hợp.
           </div>
         )}
       </div>

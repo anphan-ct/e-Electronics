@@ -31,81 +31,133 @@ function ChatBox() {
   };
 
   // 1. Tải lịch sử Chat (Cả AI và Admin)
-  useEffect(() => {
-    if (!isOpen) return; // only load when chat is opened
-    const user = getUser();
-    if (!user) return;
+  // useEffect(() => {
+  //   if (!isOpen) return; // only load when chat is opened
+  //   const user = getUser();
+  //   if (!user) return;
 
-    axios
-      .get(`http://localhost:5000/api/ai/history/${user.id}`)
-      .then(res => setAiMessages(res.data))
-      .catch(() => setAiMessages([]));
+  //   axios
+  //     .get(`http://localhost:5000/api/ai/history/${user.id}`)
+  //     .then(res => setAiMessages(res.data))
+  //     .catch(() => setAiMessages([]));
 
-  }, [isOpen]);
+  // }, [isOpen]);
+
+  // useEffect(() => {
+  //   if (!isOpen) return;
+  //   const user = getUser();
+  //   if (!user) return;
+
+  //   const token = localStorage.getItem("token");
+
+  //   axios
+  //     .get(`http://localhost:5000/api/messages/history/${user.id}`, {
+  //       headers: { Authorization: `Bearer ${token}` }
+  //     })
+  //     .then(res => setAdminMessages(res.data))
+  //     .catch(() => setAdminMessages([]));
+
+  // }, [isOpen]);
+
 
   useEffect(() => {
     if (!isOpen) return;
+
     const user = getUser();
     if (!user) return;
 
-    const token = localStorage.getItem("token");
+    const loadData = async () => {
+      try {
+        if (isAiMode) {
+          // Load AI chat
+          const res = await axios.get(
+            `http://localhost:5000/api/ai/history/${user.id}`
+          );
+          setAiMessages(res.data);
+        } else {
+          // Load Admin chat
+          const token = localStorage.getItem("token");
 
-    axios
-      .get(`http://localhost:5000/api/messages/history/${user.id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      .then(res => setAdminMessages(res.data))
-      .catch(() => setAdminMessages([]));
+          const res = await axios.get(
+            `http://localhost:5000/api/messages/history/${user.id}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
 
-  }, [isOpen]);
+          setAdminMessages(res.data);
+        }
+      } catch (err) {
+        console.log("Load chat error:", err);
+      }
+    };
+
+    loadData();
+  }, [isOpen, isAiMode]);
 
   // 2. Nhận tin nhắn Real-time
   useEffect(() => {
     const user = getUser();
-    if (isOpen && user?.id) socketRef.current.emit("join_room", user.id);
+    if (user?.id) {
+      socketRef.current.emit("join_room", user.id);
+      console.log("Joined room:", user.id);
+    }
 
     const handleReceive = (msg) => {
-    // Chỉ xử lý tin nhắn từ Admin tại đây
-    if (String(msg.senderId) !== "0" && String(msg.senderId) !== String(user?.id)) {
-      setAdminMessages(prev => [...prev, msg]);
-      if (isAiMode) {
-        setIsAiMode(false);
-        toast.info("Tư vấn viên đã tham gia hỗ trợ bạn!");
-      }
-    }
-  };
-
-  const handleDeleted = ({ messageId }) => {
-    const id = parseInt(messageId);
-    // Đồng bộ xóa cho cả 2 mảng tin nhắn
-    setAdminMessages(prev => prev.filter(m => m.id !== id));
-    setAiMessages(prev => prev.filter(m => m.id !== id));
-  };
-
-  const handleAIMessage = (msg) => {
-    // FIX 1: Thêm ?. tránh lỗi null và FIX 2: Chỉ nhận tin từ AI (tránh trùng lặp tin user)
     const userNow = getUser();
-    if (String(msg.userId) === String(userNow?.id) && msg.sender === "ai") { 
-      const newMsg = {
-        id: msg.id, // Lưu ID để đồng bộ xóa
-        senderId: 0,
-        text: msg.text,
-        time: new Date()
-      };
-      setAiMessages(prev => [...prev, newMsg]);
+
+    // CHỈ nhận khi đang ở Admin mode
+    if (!isAiMode) {
+      setAdminMessages(prev => {
+        if (prev.find(m => m.id === msg.id)) return prev;
+        return [...prev, msg];
+      });
+    }
+
+    // Nếu admin gửi tin khi đang AI mode → auto switch
+    if (
+      isAiMode &&
+      String(msg.senderId) !== "0" &&
+      String(msg.senderId) !== String(userNow?.id)
+    ) {
+      setIsAiMode(false);
+      toast.info("Tư vấn viên đã tham gia hỗ trợ bạn!");
     }
   };
 
-  socketRef.current.on("receive_message", handleReceive);
-  socketRef.current.on("message_deleted", handleDeleted);
-  socketRef.current.on("ai_message", handleAIMessage);
+    const handleDeleted = ({ messageId }) => {
+      const id = parseInt(messageId);
+      setAdminMessages(prev => prev.filter(m => m.id !== id));
+      setAiMessages(prev => prev.filter(m => m.id !== id));
+    };
 
-  return () => {
-    socketRef.current.off("receive_message", handleReceive);
-    socketRef.current.off("message_deleted", handleDeleted);
+    const handleAIMessage = (msg) => {
+      const userNow = getUser();
+      if (String(msg.userId) === String(userNow?.id)) { 
+        const newMsg = {
+          id: msg.id, 
+          senderId: msg.sender === "ai" ? 0 : userNow.id,
+          text: msg.text,
+          time: new Date()
+        };
+        setAiMessages(prev => {
+          // Tránh trùng lặp do socket
+          if (prev.find(m => m.id === newMsg.id)) return prev;
+          return [...prev, newMsg];
+        });
+      }
+    };
+
+    socketRef.current.on("receive_message", handleReceive);
+    socketRef.current.on("message_deleted", handleDeleted);
+    socketRef.current.on("ai_message", handleAIMessage);
+
+    return () => {
+      socketRef.current.off("receive_message", handleReceive);
+      socketRef.current.off("message_deleted", handleDeleted);
     socketRef.current.off("ai_message", handleAIMessage);
-  };
-}, [isOpen, isAiMode]);
+    };
+  }, [isOpen, isAiMode]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -134,18 +186,18 @@ function ChatBox() {
     setInput("");
 
     if (isAiMode) {
-      // KHÔNG setAiMessages tại đây nữa. Để Socket handle giúp tránh trùng lặp.
-      const localMsg = { senderId: userNow.id, text: textContent, time: new Date(), id: Date.now() };
-      setAiMessages(prev => [...prev, localMsg]); 
+      // Để Socket lo việc update UI (đúng như bạn dự định) để lấy ID thật từ DB
       try {
         await axios.post("http://localhost:5000/api/ai/chat", {
           message: textContent,
           userId: userNow.id
         });
       } catch (err) {
-        toast.error("AI hiện đang bận.");
+        toast.error("Hệ thống AI hiện đang bận.");
       }
     } else {
+      console.log("Sending message:", textContent);
+
       socketRef.current.emit("send_message", {
         room: userNow.id,
         text: textContent,

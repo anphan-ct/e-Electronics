@@ -29,6 +29,8 @@ router.put("/users/:id/unlock", verifyToken, isAdmin, dashboardController.unlock
 router.put("/users/:id/lock", verifyToken, isAdmin, dashboardController.lockUser);
 router.delete("/users/:id", verifyToken, isAdmin, dashboardController.deleteUser);
 
+router.get("/products/categories", verifyToken, dashboardController.getProductCategories);
+
 // Product management routes (CRUD) 
 router.get("/products", verifyToken, dashboardController.getProducts);
 router.get("/products/:id", verifyToken, isAdmin, dashboardController.getProductById);

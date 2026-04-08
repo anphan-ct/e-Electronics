@@ -9,11 +9,12 @@ import AdminChat from "./AdminChat";
 import Security from "./Security";
 import UserDetail from "./UserDetail";
 import AdminProductDetail from "./AdminProductDetail";
+import Loyalty from "./Loyalty";
 
 export default function AdminDashBoard() {
   // Logic kiểm tra quyền admin của bạn
-  const admin = JSON.parse(localStorage.getItem("user") || "{}");
-  if (!admin || admin.role !== "admin") return <Navigate to="/" replace />;
+  const admin = JSON.parse(localStorage.getItem("user") || "null");
+  if (!admin || String(admin.role || "").toLowerCase() !== "admin") return <Navigate to="/" replace />;
 
   return (
     <Routes>
@@ -31,6 +32,7 @@ export default function AdminDashBoard() {
         <Route path="users/:id" element={<UserDetail />} />
         <Route path="chat" element={<AdminChat />} />
         <Route path="security" element={<Security />} />
+        <Route path="loyalty" element={<Loyalty />} />
       </Route>
     </Routes>
   );

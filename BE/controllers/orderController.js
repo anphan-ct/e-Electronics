@@ -24,7 +24,7 @@ exports.getMyOrders = (req, res) => {
 
   db.query(sql, [userId], (err, results) => {
     if (err) {
-      console.error("🔥 SQL ERROR:", err);
+      console.error(" SQL ERROR:", err);
       return res.status(500).json({ message: "Lỗi server" });
     }
 

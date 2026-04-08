@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 import {
   LayoutDashboard, ShoppingCart, Users, Package, MessageSquare,
   Search, ChevronRight, RefreshCw, LogOut, Menu, Zap, Moon, Sun, Home,
-  ShieldAlert,
+  ShieldAlert, Star,
 } from "lucide-react";
 import axios from "axios";
 import "../AdminDashboard.css";
@@ -44,7 +44,7 @@ export default function AdminLayout() {
   useEffect(() => {
     fetchSidebarStats();
     const handleSecurityUpdate = () => {
-      console.log("🔔 Đã nhận tín hiệu cập nhật bảo mật!");
+      console.log("Đã nhận tín hiệu cập nhật bảo mật!");
       fetchSidebarStats();
     };
     window.addEventListener("security-update", handleSecurityUpdate);
@@ -85,6 +85,7 @@ export default function AdminLayout() {
     { path: "/admin/users",     icon: Users,           label: "Người dùng"   },
     { path: "/admin/chat",      icon: MessageSquare,   label: "Hỗ trợ Chat"  },
     { path: "/admin/security",  icon: ShieldAlert,     label: "Bảo mật",     count: alertCount > 0 ? alertCount : undefined },
+    { path: "/admin/loyalty",   icon: Star,            label: "Điểm thưởng" },
   ];
 
   return (
