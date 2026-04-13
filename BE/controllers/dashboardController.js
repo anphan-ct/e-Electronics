@@ -183,10 +183,13 @@ exports.updateOrderStatus = async (req, res) => {
 // GET /api/dashboard/product-categories  — Lấy danh sách ID danh mục sản phẩm
 exports.getProductCategories = async (req, res) => {
   try {
-    // Lấy ra các ID danh mục duy nhất đang tồn tại trong products
-    const rows = await query("SELECT DISTINCT category_id FROM products WHERE category_id IS NOT NULL ORDER BY category_id ASC");
-    res.json(rows.map(r => r.category_id));
-  } catch (err) { res.status(500).json({ message: "Lỗi server", error: err.message }); }
+    // Lấy ID và Tên danh mục từ đúng bảng categories
+    const rows = await query("SELECT id, name FROM categories ORDER BY id ASC");
+    
+    res.json(rows); 
+  } catch (err) { 
+    res.status(500).json({ message: "Lỗi server", error: err.message }); 
+  }
 };
 
 // GET /api/dashboard/products

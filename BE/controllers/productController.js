@@ -53,3 +53,16 @@ exports.searchProducts = (req, res) => {
         res.status(200).json(formatted);
     });
 };
+
+
+// Lấy danh sách danh mục
+exports.getCategories = (req, res) => {
+    const query = 'SELECT * FROM categories';
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error("Lỗi lấy danh mục:", err);
+            return res.status(500).json({ message: "Lỗi server khi lấy danh mục" });
+        }
+        res.status(200).json(results);
+    });
+};

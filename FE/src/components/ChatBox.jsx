@@ -99,50 +99,42 @@ function ChatBox() {
   useEffect(() => {
     const user = getUser();
     if (user?.id) {
-      socketRef.current.emit("join_room", user.id);
+      socketRef.current.emit("join_room", String(user.id));
       console.log("Joined room:", user.id);
     }
 
     const handleReceive = (msg) => {
-    const userNow = getUser();
-
-    // CHỈ nhận khi đang ở Admin mode
-    if (!isAiMode) {
+      // Tin nhắn từ Admin hoặc User chat với Admin (lưu vào adminMessages)
       setAdminMessages(prev => {
-        if (prev.find(m => m.id === msg.id)) return prev;
+        if (prev.find(m => String(m.id) === String(msg.id))) return prev;
         return [...prev, msg];
       });
-    }
 
-    // Nếu admin gửi tin khi đang AI mode → auto switch
-    if (
-      isAiMode &&
-      String(msg.senderId) !== "0" &&
-      String(msg.senderId) !== String(userNow?.id)
-    ) {
-      setIsAiMode(false);
-      toast.info("Tư vấn viên đã tham gia hỗ trợ bạn!");
-    }
-  };
+      // Tự động chuyển mode nếu Admin chat vào
+      if (isAiMode && String(msg.senderId) !== "0" && String(msg.senderId) !== String(user?.id)) {
+        setIsAiMode(false);
+        toast.info("Tư vấn viên đã tham gia hỗ trợ bạn!");
+      }
+    };
 
     const handleDeleted = ({ messageId }) => {
-      const id = parseInt(messageId);
-      setAdminMessages(prev => prev.filter(m => m.id !== id));
-      setAiMessages(prev => prev.filter(m => m.id !== id));
+      const id = String(messageId);
+      setAdminMessages(prev => prev.filter(m => String(m.id) !== id));
+      setAiMessages(prev => prev.filter(m => String(m.id) !== id));
     };
 
     const handleAIMessage = (msg) => {
       const userNow = getUser();
-      if (String(msg.userId) === String(userNow?.id)) { 
+      if (String(msg.userId) === String(userNow?.id)) {
         const newMsg = {
-          id: msg.id, 
-          senderId: msg.sender === "ai" ? 0 : userNow.id,
+          id: msg.id,
+          senderId: msg.sender === "ai" ? "0" : userNow.id, // Dùng String "0" cho AI để đồng nhất
           text: msg.text,
           time: new Date()
         };
+        // Tin nhắn từ User chat với AI hoặc AI trả lời (lưu vào aiMessages)
         setAiMessages(prev => {
-          // Tránh trùng lặp do socket
-          if (prev.find(m => m.id === newMsg.id)) return prev;
+          if (prev.find(m => String(m.id) === String(newMsg.id))) return prev;
           return [...prev, newMsg];
         });
       }
@@ -155,19 +147,19 @@ function ChatBox() {
     return () => {
       socketRef.current.off("receive_message", handleReceive);
       socketRef.current.off("message_deleted", handleDeleted);
-    socketRef.current.off("ai_message", handleAIMessage);
+      socketRef.current.off("ai_message", handleAIMessage);
     };
-  }, [isOpen, isAiMode]);
+  }, [isAiMode]); // Lắng nghe theo isAiMode để handle switch
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [adminMessages, aiMessages, isAiMode, isOpen]);
 
-  const handleDeleteMessage = async (id) => {
+  const handleDeleteMessage = async (msgId, isAiMessage) => {
     if (!window.confirm("Xóa tin nhắn này?")) return;
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`http://localhost:5000/api/messages/delete/${id}`, {
+      await axios.delete(`http://localhost:5000/api/messages/delete/${msgId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success("Xóa tin nhắn thành công!");
@@ -264,7 +256,7 @@ function ChatBox() {
 
                     {isMe && msgId && (
                       <div className="delete-btn-container">
-                        <button onClick={() => handleDeleteMessage(msgId)} className="btn-delete-msg border-0 bg-transparent">
+                        <button onClick={() => handleDeleteMessage(msgId, isAiMode)} className="btn-delete-msg border-0 bg-transparent">
                           <Trash2 size={16} />
                         </button>
                       </div>

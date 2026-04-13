@@ -24,6 +24,7 @@ import Products from "./pages/Admin/Products";
 import Users from "./pages/Admin/Users";
 import Overview from "./pages/Admin/Overview";
 import LoyaltyPage from "./pages/LoyaltyPage";
+import VoucherPage from "./pages/VoucherPage";
 import { useEffect } from "react";
 
 
@@ -50,6 +51,7 @@ function App() {
           <Route path="/search"            element={<Search />} />
           <Route path="/checkout/result"   element={<PaymentResult />} />
           <Route path="/loyalty"           element={<LoyaltyPage />} />
+          <Route path="/vouchers"          element={<VoucherPage />} />
         </Route>
 
         {/* ── NHÓM CÁC TRANG ADMIN (KHÔNG CÓ HEADER/FOOTER USER) ── */}

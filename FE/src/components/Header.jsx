@@ -3,7 +3,7 @@ import { useContext, useState, useEffect } from "react";
 import { CartContext } from "../context/CartContext";
 import { ThemeContext } from "../context/ThemeContext";
 import { toast } from "react-toastify";
-import { Search, Moon, Sun, ShoppingCart, LogOut, User, LayoutDashboard, Menu, Star } from 'lucide-react';
+import { Search, Moon, Sun, ShoppingCart, LogOut, User, LayoutDashboard, Menu, Star, Ticket } from 'lucide-react';
 
 function Header() {
   const { cart } = useContext(CartContext);
@@ -147,6 +147,15 @@ function Header() {
                   theme === 'dark' ? 'bg-dark text-warning' : 'bg-light text-warning'
                 }`} title="Điểm thưởng tích lũy">
                   <Star size={20} fill="currentColor" />
+                </Link>
+              )}
+
+              {/* VOUCHER (CHỈ HIỆN KHI ĐÃ ĐĂNG NHẬP) - THÊM MỚI Ở ĐÂY */}
+              {user && (
+                <Link to="/vouchers" className={`btn position-relative p-2 rounded-circle border-0 shadow-sm transition-all hover-scale ${
+                  theme === 'dark' ? 'bg-dark text-info' : 'bg-light text-info'
+                }`} title="Ví Voucher của tôi">
+                  <Ticket size={20} />
                 </Link>
               )}
 

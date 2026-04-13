@@ -1,0 +1,802 @@
+/* =========================================
+   VOUCHER WALLET CONTAINER
+========================================= */
+.voucher-wallet-container {
+  border: 1.5px solid #e5e7eb;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #fff;
+  font-family: inherit;
+}
+
+.voucher-wallet-container.dark {
+  border-color: #374151;
+  background: #141720;
+}
+
+/* Header */
+.wallet-header {
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #f8faff, #eef2ff);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+}
+
+.voucher-wallet-container.dark .wallet-header {
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.wallet-header.compact {
+  cursor: pointer;
+}
+
+.wallet-header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wallet-title-text {
+  font-weight: 700;
+  color: #1f2937;
+  font-size: 14px;
+}
+
+.voucher-wallet-container.dark .wallet-title-text {
+  color: #e5e7eb;
+}
+
+.wallet-count-badge {
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #6366f1;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 99px;
+}
+
+/* Content & Tabs */
+.wallet-content {
+  padding: 16px;
+}
+
+.wallet-tabs {
+  display: flex;
+  background: #f3f4f6;
+  border-radius: 10px;
+  padding: 3px;
+  margin-bottom: 14px;
+}
+
+.voucher-wallet-container.dark .wallet-tabs {
+  background: #1f2937;
+}
+
+.wallet-tab-btn {
+  flex: 1;
+  padding: 7px 10px;
+  border: none;
+  cursor: pointer;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: inherit;
+  transition: all 0.2s;
+  background: transparent;
+  color: #6b7280;
+}
+
+.voucher-wallet-container.dark .wallet-tab-btn {
+  color: #9ca3af;
+}
+
+.wallet-tab-btn.active {
+  background: #6366f1;
+  color: #fff !important;
+}
+
+.wallet-empty-state {
+  text-align: center;
+  padding: 24px 0;
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+.voucher-wallet-container.dark .wallet-empty-state {
+  color: #6b7280;
+}
+
+.wallet-go-redeem-btn {
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6366f1;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.wallet-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wallet-used-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 4px 0 2px;
+}
+
+.voucher-wallet-container.dark .wallet-used-title {
+  color: #6b7280;
+}
+
+/* Points Info Box */
+.points-info-box {
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: #92400e;
+}
+
+.voucher-wallet-container.dark .points-info-box {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #fcd34d;
+}
+
+
+/* =========================================
+   VOUCHER CARD
+========================================= */
+.voucher-card {
+  border: 1.5px solid var(--scope-color-light);
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.voucher-wallet-container.dark .voucher-card {
+  background: #1c2030;
+}
+
+.voucher-card.disabled {
+  border-color: #e5e7eb;
+  opacity: 0.65;
+}
+
+.voucher-wallet-container.dark .voucher-card.disabled {
+  border-color: #374151;
+}
+
+.voucher-card-strip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: linear-gradient(to bottom, var(--scope-color), var(--scope-color-light));
+  border-radius: 14px 0 0 14px;
+}
+
+.voucher-card.disabled .voucher-card-strip {
+  background: #9ca3af;
+}
+
+.voucher-card-body {
+  padding: 14px 14px 14px 20px;
+}
+
+.voucher-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.voucher-info-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.voucher-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.voucher-code {
+  font-family: monospace;
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 1px;
+  color: var(--scope-color);
+}
+
+.voucher-card.disabled .voucher-code {
+  color: #9ca3af;
+}
+
+.badge-scope {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: var(--scope-bg);
+  color: var(--scope-color);
+}
+
+.badge-redeem {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.voucher-name {
+  font-weight: 700;
+  font-size: 13px;
+  color: #1f2937;
+  margin-bottom: 2px;
+}
+
+.voucher-wallet-container.dark .voucher-name {
+  color: #e5e7eb;
+}
+
+.voucher-desc {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.voucher-wallet-container.dark .voucher-desc {
+  color: #9ca3af;
+}
+
+.voucher-action-wrap {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.badge-status {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 99px;
+}
+
+.badge-status.used {
+  color: #6b7280;
+  background: #f3f4f6;
+}
+
+.voucher-wallet-container.dark .badge-status.used {
+  background: #374151;
+}
+
+.badge-status.expired {
+  color: #ef4444;
+  background: #fee2e2;
+}
+
+.btn-use {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 14px;
+  background: var(--scope-color);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-use:hover {
+  opacity: 0.8;
+}
+
+.voucher-footer {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.voucher-wallet-container.dark .voucher-footer {
+  color: #6b7280;
+}
+
+
+/* =========================================
+   REDEEM CARD
+========================================= */
+.redeem-card {
+  border: 1.5px solid #e5e7eb;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+  transition: all 0.2s;
+}
+
+.voucher-wallet-container.dark .redeem-card {
+  border-color: #374151;
+  background: #1c2030;
+}
+
+.redeem-card.affordable {
+  border-color: rgba(245, 158, 11, 0.5); /* #f59e0b55 */
+}
+
+.redeem-card.obtained {
+  opacity: 0.6;
+}
+
+.redeem-top {
+  padding: 10px 14px;
+  background: #f9fafb;
+  border-bottom: 1px solid #f3f4f6;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.voucher-wallet-container.dark .redeem-top {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: #374151;
+}
+
+.redeem-card.affordable .redeem-top {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.13), rgba(217, 119, 6, 0.07));
+}
+
+.redeem-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.voucher-wallet-container.dark .redeem-icon-wrap {
+  background: #374151;
+}
+
+.redeem-card.affordable .redeem-icon-wrap {
+  background: #f59e0b;
+}
+
+.redeem-points-cost {
+  font-weight: 800;
+  font-size: 15px;
+  color: #9ca3af;
+  text-align: right;
+}
+
+.redeem-card.affordable .redeem-points-cost {
+  color: #d97706;
+}
+
+.redeem-action {
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.redeem-status-text {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.voucher-wallet-container.dark .redeem-status-text {
+  color: #6b7280;
+}
+
+.redeem-badge-obtained {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #10b981;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.btn-redeem {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 16px;
+  background: #f3f4f6;
+  color: #9ca3af;
+  border: none;
+  border-radius: 8px;
+  cursor: not-allowed;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: opacity 0.2s;
+}
+
+.voucher-wallet-container.dark .btn-redeem {
+  background: #374151;
+}
+
+.redeem-card.affordable .btn-redeem {
+  background: #f59e0b;
+  color: #fff;
+  cursor: pointer;
+}
+
+.redeem-card.affordable .btn-redeem:hover {
+  opacity: 0.8;
+}
+
+
+/* =========================================
+   VOUCHER PAGE STYLES
+========================================= */
+
+.vp-container {
+  max-width: 800px;
+}
+
+/* Hero Banner */
+.vp-hero-card {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 60%, #a78bfa 100%);
+  box-shadow: 0 20px 60px rgba(99, 102, 241, 0.3);
+}
+
+/* Vòng tròn trang trí góc phải trên */
+.vp-hero-circle {
+  position: absolute;
+  right: -30px;
+  top: -30px;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.vp-text-sm {
+  font-size: 13px;
+}
+
+/* Nút bấm xem điểm (Nút sáng) */
+.vp-btn-light {
+  color: #6366f1;
+  font-size: 13px;
+}
+
+/* Nút bấm mua hàng (Nút outline mờ) */
+.vp-btn-outline {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  font-size: 13px;
+  transition: background 0.2s ease;
+}
+
+.vp-btn-outline:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+
+
+/* =========================================
+   VOUCHER ADMIN STYLES
+========================================= */
+
+/* -- Table Cells & Texts -- */
+.vc-code-text {
+  font-weight: 800;
+  color: var(--accent);
+  font-family: monospace;
+  letter-spacing: 1px;
+}
+
+.vc-discount-val {
+  font-weight: 700;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.vc-discount-max {
+  font-weight: 400;
+  color: var(--text2);
+  font-size: 11px;
+}
+
+.vc-mt-2 {
+  margin-top: 2px;
+}
+
+.vc-text-center {
+  text-align: center;
+}
+
+/* -- Badges -- */
+.vc-badge-scope {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 99px;
+  background: var(--scope-bg);
+  color: var(--scope-c);
+}
+
+.vc-badge-source {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 99px;
+}
+.vc-source-redeem {
+  background: #fef3c7;
+  color: #d97706;
+}
+.vc-source-admin {
+  background: #e0e7ff;
+  color: #4f46e5;
+}
+
+.vc-usage-text {
+  font-weight: 700;
+  color: var(--text);
+}
+.vc-usage-limit {
+  color: var(--text2);
+  font-weight: 400;
+}
+
+.vc-expiry-expired {
+  color: #ef4444;
+}
+.vc-expiry-valid {
+  color: var(--text2);
+}
+
+.vc-badge-status {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 99px;
+}
+.vc-status-active {
+  background: #d1fae5;
+  color: #059669;
+}
+.vc-status-inactive {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* -- Action Buttons -- */
+.vc-action-group {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  align-items: center;
+}
+
+.vc-btn-toggle {
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+.vc-btn-toggle.active {
+  color: #10b981;
+}
+.vc-btn-toggle.inactive {
+  color: #9ca3af;
+}
+
+.vc-btn-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.vc-btn-edit {
+  background: #dbeafe;
+  color: #2563eb;
+}
+.vc-btn-delete {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* =========================================
+   MODAL & FORM (Tích hợp Dark Mode)
+========================================= */
+
+.vc-modal-content {
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #fff;
+  color: #111;
+}
+.dark .vc-modal-content {
+  background: #1f2937;
+  color: #e5e7eb;
+}
+
+.vc-modal-header {
+  border-color: #eee !important;
+}
+.dark .vc-modal-header {
+  border-color: #374151 !important;
+}
+
+.vc-label {
+  color: #333;
+}
+.dark .vc-label {
+  color: #e5e7eb;
+}
+
+.vc-input {
+  background: #fff !important;
+  color: #000 !important;
+  border-color: #ddd !important;
+}
+.dark .vc-input {
+  background: #374151 !important;
+  color: #fff !important;
+  border-color: #4b5563 !important;
+}
+
+.vc-cat-wrap {
+  padding: 12px;
+  border-radius: 8px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 12px;
+}
+.dark .vc-cat-wrap {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+.vc-cat-title {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #6b7280;
+}
+.dark .vc-cat-title {
+  color: #9ca3af;
+}
+
+.vc-cat-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.vc-cat-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.15s;
+  background: #fff;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+.dark .vc-cat-item {
+  background: #4b5563;
+  color: #e5e7eb;
+  border-color: #6b7280;
+}
+.vc-cat-item.selected {
+  background: #6366f1 !important;
+  color: #fff !important;
+  border-color: #6366f1 !important;
+}
+
+.vc-active-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: #333;
+}
+.dark .vc-active-check {
+  color: #e5e7eb;
+}
+
+.vc-form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+
+/* =========================================
+   VOUCHER PAGE STYLES
+========================================= */
+
+.vp-container {
+  max-width: 800px;
+}
+
+/* Hero Banner */
+.vp-hero-card {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 60%, #a78bfa 100%);
+  box-shadow: 0 20px 60px rgba(99, 102, 241, 0.3);
+}
+
+/* Vòng tròn trang trí góc phải trên */
+.vp-hero-circle {
+  position: absolute;
+  right: -30px;
+  top: -30px;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Text mô tả */
+.vp-text-sm {
+  font-size: 13px;
+}
+
+/* Nút bấm xem điểm (Nút sáng) */
+.vp-btn-light {
+  color: #6366f1 !important;
+  font-size: 13px;
+}
+
+/* Nút bấm mua hàng (Nút outline kính/glassmorphism) */
+.vp-btn-outline {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  font-size: 13px;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.vp-btn-outline:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #fff;
+}

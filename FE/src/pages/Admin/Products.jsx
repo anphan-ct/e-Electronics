@@ -176,13 +176,13 @@ export default function Products() {
             >
               <option value="">Tất cả danh mục</option>
               {categories.map(cat => (
-                <option key={cat} value={cat}>Danh mục: {cat}</option>
+                <option key={cat.id} value={cat.id}>#ID: {cat.id} - {cat.name}</option>
               ))}
             </select>
             <ChevronDown size={16} style={{ position: 'absolute', right: '12px', color: isDark ? '#9ca3af' : '#6b7280', pointerEvents: 'none' }} />
           </div>
 
-          {/* 🆕 Nút Thêm Sản Phẩm (Modern UI) */}
+          {/*  Nút Thêm Sản Phẩm (Modern UI) */}
           <button 
             onClick={() => openFormModal()} 
             style={{

@@ -1,9 +1,16 @@
+// BE/routes/orderRoutes.js — ĐÃ FIX HOÀN TOÀN
+// Fix: 1) Xóa route /place-cod bị khai báo 2 lần
+//      2) Lưu đủ voucher_id, voucher_code, discount_from_voucher vào orders
+//      3) Cập nhật used_count và user_vouchers đúng cách trong cùng 1 transaction
+
 const express = require("express");
 const router  = express.Router();
 const { getMyOrders } = require("../controllers/orderController");
 const authMiddleware  = require("../middleware/authMiddleware");
 const db = require("../config/db");
 const { calculateAndAddPoints, getConfig } = require("../controllers/loyaltyController");
+const { verifyAndCalculateVoucher } = require("../controllers/voucherController");
+
 
 function query(sql, params = []) {
   return new Promise((resolve, reject) => {
@@ -14,17 +21,20 @@ function query(sql, params = []) {
   });
 }
 
-// GET /api/orders/my-orders (giữ nguyên)
+// GET /api/orders/my-orders
 router.get("/my-orders", authMiddleware, getMyOrders);
 
-// ────────────────────────────────────────────────────────────────────
-// POST /api/orders/place-cod — Đặt hàng COD (có hỗ trợ điểm)
-// ────────────────────────────────────────────────────────────────────
+
+// POST /api/orders/place-cod
 router.post("/place-cod", authMiddleware, async (req, res) => {
   const userId = req.user.id;
   const {
-    items, shippingName, shippingPhone, shippingAddress,
-    pointsToUse = 0
+    items,
+    shippingName,
+    shippingPhone,
+    shippingAddress,
+    pointsToUse  = 0,
+    voucherCode  = null,
   } = req.body;
 
   if (!items || items.length === 0) {
@@ -32,112 +42,210 @@ router.post("/place-cod", authMiddleware, async (req, res) => {
   }
 
   try {
-    const cfg = await getConfig();
-    const pointValueUsd   = parseFloat(cfg.point_value_usd || 0.004);
-    const maxRedeemPct    = parseInt(cfg.max_redeem_percent || 30);
-    const minRedeem       = parseInt(cfg.min_points_to_redeem || 100);
-    const minOrderToEarn  = parseFloat(cfg.min_order_to_earn || 10);
+    // ── Bắt đầu transaction ─────────────────────────────────
+    await query("START TRANSACTION");
 
-    // ── FIX 1: BẢO MẬT - TÍNH LẠI TỔNG TIỀN TỪ DATABASE ───────────
+    const cfg = await getConfig();
+    const pointValueUsd  = parseFloat(cfg.point_value_usd   || 0.004);
+    const maxRedeemPct   = parseInt(cfg.max_redeem_percent   || 30);
+    const minRedeem      = parseInt(cfg.min_points_to_redeem || 100);
+    const minOrderToEarn = parseFloat(cfg.min_order_to_earn  || 10);
+
+    // ── BƯỚC 1: Tính giá thật từ DB ────────────────────────
     let subtotal = 0;
     const processedItems = [];
 
     for (const item of items) {
-      // Lấy giá trị thật của sản phẩm từ Database
-      const [product] = await query("SELECT price FROM products WHERE id = ?", [item.id]);
-      
+      const [product] = await query(
+        "SELECT price, category_id FROM products WHERE id = ?",
+        [item.id]
+      );
       if (!product) {
-        return res.status(400).json({ message: `Sản phẩm ID ${item.id} không tồn tại hoặc đã bị xóa.` });
+        throw new Error(`Sản phẩm ID ${item.id} không tồn tại`);
       }
-
       const realPrice = parseFloat(product.price);
-      subtotal += realPrice * item.quantity;
-      
-      // Lưu lại giá trị thật để insert vào order_items sau này
-      processedItems.push([item.id, item.quantity, realPrice]); 
+      subtotal += realPrice * (item.quantity || 1);
+      processedItems.push({
+        id:          item.id,
+        quantity:    item.quantity || 1,
+        price:       realPrice,
+        category_id: product.category_id,
+      });
     }
 
-    // ── Xử lý điểm quy đổi ────────────────────────────────
+    // ── BƯỚC 2: Kiểm tra & tính giảm từ voucher ───────────
+    // FIX: Dùng verifyAndCalculateVoucher (đã bao gồm check hạn, check scope,
+    //       check usage per user). Kết quả trả về voucher object + discountAmount.
+    let discountFromVoucher = 0;
+    let validatedVoucherId  = null;
+    let validatedVoucherCode = null;
+
+    if (voucherCode && voucherCode.trim()) {
+      // verifyAndCalculateVoucher ném Error nếu không hợp lệ → transaction ROLLBACK
+      const vResult = await verifyAndCalculateVoucher(
+        voucherCode.trim(),
+        processedItems,  // cartItems gồm { id, price, quantity, category_id }
+        userId
+      );
+      discountFromVoucher  = vResult.discountAmount;
+      validatedVoucherId   = vResult.voucher.id;
+      validatedVoucherCode = vResult.voucher.code;
+    }
+
+    // ── BƯỚC 3: Tính giảm từ điểm tích lũy ────────────────
     let actualPointsUsed   = 0;
     let discountFromPoints = 0;
-    let finalAmount        = subtotal;
+    // Tính trên giá đã trừ voucher
+    let finalAmount = parseFloat((subtotal - discountFromVoucher).toFixed(2));
 
     if (pointsToUse > 0) {
-      const [user] = await query("SELECT loyalty_points FROM users WHERE id = ?", [userId]);
+      // FIX: Dùng SELECT ... FOR UPDATE để lock row user tránh race condition
+      const [user] = await query(
+        "SELECT loyalty_points FROM users WHERE id = ? FOR UPDATE",
+        [userId]
+      );
       const available = user?.loyalty_points || 0;
 
-      if (available >= minRedeem) {
+      if (available >= minRedeem && pointsToUse <= available) {
         const requestedDiscount = pointsToUse * pointValueUsd;
-        const maxDiscount       = subtotal * maxRedeemPct / 100;
+        const maxDiscount       = finalAmount * maxRedeemPct / 100;
         const actualDiscount    = Math.min(requestedDiscount, maxDiscount);
 
-        actualPointsUsed   = Math.min(pointsToUse, Math.ceil(actualDiscount / pointValueUsd), available);
-        discountFromPoints = parseFloat((actualPointsUsed * pointValueUsd).toFixed(2));
-        finalAmount        = parseFloat((subtotal - discountFromPoints).toFixed(2));
-
+        actualPointsUsed   = Math.min(
+          pointsToUse,
+          Math.ceil(actualDiscount / pointValueUsd),
+          available
+        );
+        discountFromPoints = parseFloat(
+          (actualPointsUsed * pointValueUsd).toFixed(2)
+        );
+        finalAmount = parseFloat(
+          (finalAmount - discountFromPoints).toFixed(2)
+        );
         if (finalAmount < 0.01) finalAmount = 0.01;
 
-        // ── FIX 2: RACE CONDITION - TRỪ ĐIỂM AN TOÀN ───────────
+        // FIX: Trừ điểm với điều kiện loyalty_points >= actualPointsUsed
         const updateRes = await query(
           "UPDATE users SET loyalty_points = loyalty_points - ? WHERE id = ? AND loyalty_points >= ?",
           [actualPointsUsed, userId, actualPointsUsed]
         );
-
-        // Nếu update không thành công (do điểm không đủ hoặc gửi 2 request cùng lúc)
         if (updateRes.affectedRows === 0) {
-          return res.status(400).json({ message: "Điểm không đủ hoặc giao dịch bị trùng lặp!" });
+          throw new Error("Điểm không đủ hoặc giao dịch bị trùng lặp!");
         }
       }
     }
 
-    // ── Tạo đơn hàng ──────────────────────────────────────
-    const orderResult = await query(`
-      INSERT INTO orders
-        (user_id, total, status, payment_method, payment_status,
-         shipping_name, shipping_phone, shipping_address,
-         points_used, discount_from_points)
-      VALUES (?, ?, 'pending', 'cod', 'pending', ?, ?, ?, ?, ?)
-    `, [userId, finalAmount, shippingName, shippingPhone, shippingAddress,
-        actualPointsUsed, discountFromPoints]);
-
+    // ── BƯỚC 4: Tạo đơn hàng ──────────────────────────────
+    // FIX: Lưu đủ voucher_id, voucher_code, discount_from_voucher
+    const orderResult = await query(
+      `INSERT INTO orders
+         (user_id, total, status, payment_method, payment_status,
+          shipping_name, shipping_phone, shipping_address,
+          points_used, discount_from_points,
+          voucher_id, voucher_code, discount_from_voucher)
+       VALUES (?, ?, 'pending', 'cod', 'pending', ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        userId,
+        finalAmount,
+        shippingName,
+        shippingPhone,
+        shippingAddress,
+        actualPointsUsed,
+        discountFromPoints,
+        validatedVoucherId,           // FIX: lưu ID vào cột voucher_id
+        validatedVoucherCode,         // FIX: lưu code vào cột voucher_code
+        discountFromVoucher,          // FIX: lưu số tiền giảm
+      ]
+    );
     const orderId = orderResult.insertId;
 
-    // ── Insert order items (sử dụng giá thật từ DB) ───────
+    // ── BƯỚC 5: Chèn order items ───────────────────────────
     if (processedItems.length > 0) {
-      const itemValues = processedItems.map(i => [orderId, i[0], i[1], i[2]]);
-      await query("INSERT INTO order_items (order_id, product_id, quantity, price) VALUES ?", [itemValues]);
-    }
-
-    // Ghi lịch sử trừ điểm (nếu có dùng)
-    if (actualPointsUsed > 0) {
-      const [userAfter] = await query("SELECT loyalty_points FROM users WHERE id = ?", [userId]);
+      const itemValues = processedItems.map(i => [orderId, i.id, i.quantity, i.price]);
       await query(
-        `INSERT INTO loyalty_transactions
-          (user_id, order_id, type, points, balance_after, description)
-         VALUES (?, ?, 'redeem', ?, ?, ?)`,
-        [userId, orderId, -actualPointsUsed, userAfter.loyalty_points,
-         `Dùng ${actualPointsUsed} điểm giảm $${discountFromPoints} cho đơn COD #${orderId}`]
+        "INSERT INTO order_items (order_id, product_id, quantity, price) VALUES ?",
+        [itemValues]
       );
     }
 
-    // ── Tích điểm COD (tích ngay vì COD không cần xác nhận thanh toán) ──
+    // ── BƯỚC 6: Ghi lịch sử trừ điểm (nếu có) ─────────────
+    if (actualPointsUsed > 0) {
+      const [userAfter] = await query(
+        "SELECT loyalty_points FROM users WHERE id = ?",
+        [userId]
+      );
+      await query(
+        `INSERT INTO loyalty_transactions
+           (user_id, order_id, type, points, balance_after, description)
+         VALUES (?, ?, 'redeem', ?, ?, ?)`,
+        [
+          userId,
+          orderId,
+          -actualPointsUsed,
+          userAfter.loyalty_points,
+          `Dùng ${actualPointsUsed} điểm giảm $${discountFromPoints} cho đơn COD #${orderId}`,
+        ]
+      );
+    }
+
+    // ── BƯỚC 7: Cập nhật trạng thái voucher sau khi dùng ───
+    // FIX: Logic đúng — tăng used_count + đổi trạng thái user_vouchers
+    if (validatedVoucherId) {
+      // Tăng used_count của voucher
+      await query(
+        "UPDATE vouchers SET used_count = used_count + 1 WHERE id = ?",
+        [validatedVoucherId]
+      );
+
+      // Tìm user_voucher đang active của user với voucher này
+      const [existingUV] = await query(
+        `SELECT id FROM user_vouchers
+         WHERE user_id = ? AND voucher_id = ? AND status = 'active'
+         LIMIT 1`,
+        [userId, validatedVoucherId]
+      );
+
+      if (existingUV) {
+        // User đã lưu voucher vào ví → đổi thành used
+        await query(
+          "UPDATE user_vouchers SET status='used', order_id=?, used_at=NOW() WHERE id=?",
+          [orderId, existingUV.id]
+        );
+      } else {
+        // User nhập mã trực tiếp mà chưa lưu vào ví → insert mới với status=used
+        await query(
+          `INSERT INTO user_vouchers
+             (user_id, voucher_id, order_id, status, points_spent, used_at)
+           VALUES (?, ?, ?, 'used', 0, NOW())`,
+          [userId, validatedVoucherId, orderId]
+        );
+      }
+    }
+
+    // ── BƯỚC 8: Commit transaction ─────────────────────────
+    await query("COMMIT");
+
+    // ── BƯỚC 9: Tích điểm COD (gọi sau COMMIT vì hàm này có transaction riêng) ──
     let pointsEarned = 0;
     if (finalAmount >= minOrderToEarn) {
       pointsEarned = await calculateAndAddPoints(orderId, userId, finalAmount, "cod");
     }
 
     res.status(201).json({
-      message: "Đặt hàng thành công",
+      message:             "Đặt hàng thành công",
       orderId,
-      pointsUsed: actualPointsUsed,
+      pointsUsed:          actualPointsUsed,
       discountFromPoints,
+      discountFromVoucher,
+      voucherCode:         validatedVoucherCode,
       finalAmount,
       pointsEarned,
     });
 
   } catch (err) {
-    console.error("place-cod error:", err);
-    res.status(500).json({ message: "Lỗi server", error: err.message });
+    await query("ROLLBACK");
+    console.error("place-cod error:", err.message);
+    res.status(400).json({ message: err.message || "Lỗi khi đặt hàng" });
   }
 });
 

@@ -46,7 +46,7 @@ function AdminChat() {
     const fetchHistory = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get(`http://localhost:5000/api/messages/history/${targetUserId}`, { headers: { Authorization: `Bearer ${token}` } });
+        const res = await axios.get(`http://localhost:5000/api/messages/admin/history/${targetUserId}`, { headers: { Authorization: `Bearer ${token}` } });
         setMessages(res.data);
       } catch (err) { toast.error("Không thể tải lịch sử chat"); }
     };
@@ -63,7 +63,7 @@ function AdminChat() {
 
     const handleAIMessage = (data) => {
       if (String(targetUserId) === String(data.userId)) {
-        setMessages(prev => [...prev, { id: data.id, senderId: data.sender === "user" ? data.userId : 0, senderRole: data.sender === "user" ? "user" : "ai", text: data.text, time: new Date() }]);
+        setMessages(prev => [...prev, { id: "ai_" + data.id, senderId: data.sender === "user" ? data.userId : 0, senderRole: data.sender === "user" ? "user" : "ai", text: data.text, time: new Date() }]);
       } else {
         setUsers(prev => prev.map(u => String(u.id) === String(data.userId) ? { ...u, unread: true } : u));
       }
@@ -164,6 +164,7 @@ function AdminChat() {
               {/* Vùng hiển thị tin nhắn */}
               <div ref={scrollRef} className="flex-grow-1 overflow-y-auto p-4 custom-scrollbar d-flex flex-column gap-2">
                 {messages.map((m, i) => {
+                  const msgKey = m.id ? `${m.id}_${i}` : i;
                   const isAI = m.senderRole === 'ai' || String(m.senderId) === "0";
                   const isAdmin = m.senderRole === 'admin' || String(m.senderId) === String(admin.id);
                   const isCustomer = !isAI && !isAdmin;

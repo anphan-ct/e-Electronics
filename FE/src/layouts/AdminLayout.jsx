@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 import {
   LayoutDashboard, ShoppingCart, Users, Package, MessageSquare,
   Search, ChevronRight, RefreshCw, LogOut, Menu, Zap, Moon, Sun, Home,
-  ShieldAlert, Star,
+  ShieldAlert, Star, Ticket
 } from "lucide-react";
 import axios from "axios";
 import "../AdminDashboard.css";
@@ -86,6 +86,7 @@ export default function AdminLayout() {
     { path: "/admin/chat",      icon: MessageSquare,   label: "Hỗ trợ Chat"  },
     { path: "/admin/security",  icon: ShieldAlert,     label: "Bảo mật",     count: alertCount > 0 ? alertCount : undefined },
     { path: "/admin/loyalty",   icon: Star,            label: "Điểm thưởng" },
+    { path: "/admin/vouchers",  icon: Ticket,          label: "Voucher" },
   ];
 
   return (

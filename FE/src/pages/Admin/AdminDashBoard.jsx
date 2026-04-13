@@ -10,6 +10,8 @@ import Security from "./Security";
 import UserDetail from "./UserDetail";
 import AdminProductDetail from "./AdminProductDetail";
 import Loyalty from "./Loyalty";
+import Vouchers from "./Vouchers";
+
 
 export default function AdminDashBoard() {
   // Logic kiểm tra quyền admin của bạn
@@ -33,6 +35,7 @@ export default function AdminDashBoard() {
         <Route path="chat" element={<AdminChat />} />
         <Route path="security" element={<Security />} />
         <Route path="loyalty" element={<Loyalty />} />
+        <Route path="vouchers" element={<Vouchers />} />
       </Route>
     </Routes>
   );
