@@ -38,5 +38,6 @@ router.put("/admin/:id",        verifyToken, isAdmin, ctrl.adminUpdateVoucher);
 router.delete("/admin/:id",     verifyToken, isAdmin, ctrl.adminDeleteVoucher);
 router.put("/admin/:id/toggle", verifyToken, isAdmin, ctrl.adminToggleVoucher);
 router.post("/admin/grant",     verifyToken, isAdmin, ctrl.adminGrantVoucher);
+router.get("/admin/:id",        verifyToken, isAdmin, ctrl.adminGetVoucherById);
 
 module.exports = router;

@@ -148,7 +148,7 @@ exports.getMyVouchers = async (req, res) => {
               v.max_discount, v.min_order, v.apply_scope, v.expire_at, v.source
        FROM user_vouchers uv
        JOIN vouchers v ON uv.voucher_id = v.id
-       WHERE uv.user_id = ?
+       WHERE uv.user_id = ? 
        ORDER BY uv.obtained_at DESC`,
       [userId]
     );
@@ -471,5 +471,28 @@ exports.adminGrantVoucher = async (req, res) => {
     res.json({ message: "Đã cấp voucher cho người dùng thành công"});
   } catch (err) {
     res.status(500).json({ message: "Lỗi server", error: err.message });
+  }
+};
+
+exports.adminGetVoucherById = async (req, res) => {
+  try {
+    const [voucher] = await query(`SELECT v.*, 
+      (SELECT COUNT(*) FROM user_vouchers uv WHERE uv.voucher_id = v.id AND uv.status='used') as real_used_count
+      FROM vouchers v WHERE v.id = ?`,
+      [req.params.id]
+    );
+
+    if (!voucher) return res.status(400).json({ message: "Không tìm thấy voucher!"});
+
+    const conditions = await query(`
+      SELECT vc.ref_type, vc.ref_id, c.name AS category_name, p.name AS product_name
+      FROM voucher_conditions vc LEFT JOIN categories c ON vc.ref_type = 'category' AND vc.ref_id = c.id
+      LEFT JOIN products p ON vc.ref_type = 'product' AND vc.ref_id = p.id
+      WHERE voucher_id = ?`, [voucher.id]);
+    voucher.conditions = conditions;
+
+    res.json(voucher); 
+  } catch (err){
+    res.status(500).json({ message: "Lỗi server:", error: err.message });
   }
 };

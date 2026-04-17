@@ -1,5 +1,4 @@
 // ─── STATUS BADGE ─────────────────────────────────────────
-// Dùng đúng CSS class .adm-badge từ AdminDashboard.css
 const BADGE_MAP = {
   pending:   { label: "Chờ xử lý", bg: "#fef3c7", color: "#d97706" },
   confirmed: { label: "Xác nhận",  bg: "#d1fae5", color: "#059669" },

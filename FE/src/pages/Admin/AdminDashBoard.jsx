@@ -11,6 +11,8 @@ import UserDetail from "./UserDetail";
 import AdminProductDetail from "./AdminProductDetail";
 import Loyalty from "./Loyalty";
 import Vouchers from "./Vouchers";
+import OrderDetail from "./OrderDetail";
+import VoucherDetail from "./VoucherDetail";
 
 
 export default function AdminDashBoard() {
@@ -28,6 +30,7 @@ export default function AdminDashBoard() {
         
         {/* Các đường dẫn con khác */}
         <Route path="orders" element={<Orders />} />
+        <Route path="orders/:id" element={<OrderDetail />} />
         <Route path="products" element={<Products />} />
         <Route path="products/:id" element={<AdminProductDetail />} />
         <Route path="users" element={<Users />} />
@@ -36,6 +39,7 @@ export default function AdminDashBoard() {
         <Route path="security" element={<Security />} />
         <Route path="loyalty" element={<Loyalty />} />
         <Route path="vouchers" element={<Vouchers />} />
+        <Route path="vouchers/:id" element={<VoucherDetail />} />
       </Route>
     </Routes>
   );

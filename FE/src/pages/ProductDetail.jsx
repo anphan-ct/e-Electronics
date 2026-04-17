@@ -32,7 +32,6 @@ function ProductDetail() {
     const user = localStorage.getItem("user");
     if (!user) {
       toast.info("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!");
-      // CHỈ THAY ĐỔI: mở modal login thay vì navigate("/login")
       const loginModal = document.getElementById("loginModal");
       if (window.bootstrap && loginModal) {
         window.bootstrap.Modal.getOrCreateInstance(loginModal).show();

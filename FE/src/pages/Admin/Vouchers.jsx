@@ -9,6 +9,7 @@ import {
   Ticket, Plus, RefreshCw, Tag, ToggleLeft, ToggleRight,
   Trash2, Edit3, TrendingUp, Gift, Users, Zap
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import "../../voucher.css";
 
 const API  = "http://localhost:5000/api/vouchers/admin";
@@ -39,6 +40,7 @@ export default function Vouchers() {
   const { searchQuery = "" } = useOutletContext() || {};
   const { theme } = useContext(ThemeContext);
   const isDark = theme === "dark";
+  const navigate = useNavigate();
 
   const [vouchers, setVouchers] = useState(null);
   const [stats,    setStats]    = useState(null);
@@ -237,7 +239,11 @@ export default function Vouchers() {
                 const scopeColor = SCOPE_COLOR[v.apply_scope] || "#6366f1";
                 const isExpired = v.expire_at && new Date(v.expire_at) < new Date();
                 return (
-                  <tr key={v.id}>
+                  <tr key={v.id}
+                      onClick={() => navigate(`/admin/vouchers/${v.id}`)}
+                      style={{ cursor: "pointer" }}
+                      className="adm-table-row-hover"
+                  >
                     <td>
                       <div className="vc-code-text">{v.code}</div>
                       <div className="adm-cell-sub">{v.name}</div>
@@ -302,21 +308,21 @@ export default function Vouchers() {
                       <div className="vc-action-group">
                         <button
                           title={v.is_active ? "Tắt voucher" : "Bật voucher"}
-                          onClick={() => handleToggle(v.id, v.is_active)}
+                          onClick={(e) => { e.stopPropagation(); handleToggle(v.id, v.is_active); }} // Chặn sự kiện click dòng
                           className={`vc-btn-toggle ${v.is_active ? 'active' : 'inactive'}`}
                         >
                           {v.is_active ? <ToggleRight size={22} /> : <ToggleLeft size={22} />}
                         </button>
                         <button
                           title="Chỉnh sửa"
-                          onClick={() => openEdit(v)}
+                          onClick={(e) => { e.stopPropagation(); openEdit(v); }}
                           className="vc-btn-icon vc-btn-edit"
                         >
-                          <Edit3 size={13} />
+                          <Edit3 size={13} /> 
                         </button>
                         <button
                           title="Xóa"
-                          onClick={() => handleDelete(v.id, v.code)}
+                          onClick={(e) => { e.stopPropagation(); handleDelete(v.id, v.code); }}
                           className="vc-btn-icon vc-btn-delete"
                         >
                           <Trash2 size={13} />

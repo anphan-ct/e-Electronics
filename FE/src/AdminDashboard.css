@@ -1858,3 +1858,311 @@ textarea.adm-form-input {
 }
 .apd-wrapper.light .apd-spec-value { color: #111827; }
 .apd-wrapper.dark .apd-spec-value { color: #f3f4f6; }
+
+
+/* ============================================================
+   ORDER DETAIL PAGE (MODERN UI)
+   ============================================================ */
+.adm-od-container {
+  padding: 20px;
+  color: var(--text);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Header */
+.adm-od-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+}
+.adm-od-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.adm-od-back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+  transition: all 0.2s ease;
+}
+.adm-od-back-btn:hover {
+  background: var(--card2);
+  transform: translateX(-3px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+.adm-od-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text);
+}
+/* Nhãn ID nổi bật */
+.adm-od-id-badge {
+  background: var(--blue);
+  color: #ffffff;
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+}
+.adm-od-date {
+  margin: 6px 0 0 0;
+  font-size: 14px;
+  color: var(--text2);
+  font-weight: 500;
+}
+
+/* Info Cards */
+.adm-od-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  margin-bottom: 28px;
+}
+.adm-od-card {
+  background: var(--card);
+  padding: 24px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  /* Tăng shadow để Card nổi khối, hết bị nhạt */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(0, 0, 0, 0.02);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.adm-od-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+.adm-od-card-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.adm-od-card-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.adm-od-card-title {
+  margin: 0;
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 700;
+}
+.adm-od-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.adm-od-card-row {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text);
+  font-size: 15px;
+}
+.adm-od-card-row.align-center {
+  align-items: center;
+}
+.adm-od-card-row.border-top {
+  padding-top: 16px;
+  border-top: 1px dashed var(--border);
+}
+.adm-od-card-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 15px;
+}
+.adm-od-card-label {
+  color: var(--text2);
+  font-weight: 500;
+}
+.adm-od-card-value {
+  text-align: right;
+  font-weight: 600;
+  color: var(--text);
+}
+.adm-od-card-value.break-all {
+  word-break: break-all;
+}
+.adm-od-card-value.line-height {
+  line-height: 1.6;
+  text-align: left;
+}
+
+/* Products Table Section */
+.adm-od-section-title {
+  margin: 0 0 20px 0;
+  font-size: 19px;
+  color: var(--text);
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.adm-od-section-subtitle {
+  color: var(--text2);
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--card2);
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+.adm-od-table-wrap {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.adm-od-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.adm-od-table th {
+  padding: 16px;
+  background: var(--card2);
+  color: var(--text2);
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.adm-od-table td {
+  padding: 18px 16px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  vertical-align: middle;
+}
+.adm-od-table tr:last-child td {
+  border-bottom: none;
+}
+.adm-od-product-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.adm-od-product-img {
+  width: 58px;
+  height: 58px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+.adm-od-product-placeholder {
+  width: 58px;
+  height: 58px;
+  background: var(--card2);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.adm-od-product-name {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text);
+}
+.adm-od-qty-pill {
+  background: var(--card2);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.adm-od-price-total {
+  font-weight: 700;
+  color: var(--red);
+  font-size: 16px;
+}
+
+/* Summary Section */
+.adm-od-summary-section {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 30px;
+}
+.adm-od-summary-box {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--card2);
+  padding: 24px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+}
+.adm-od-summary-row {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text2);
+  font-size: 15px;
+  font-weight: 500;
+}
+.adm-od-summary-row span:last-child {
+  color: var(--text);
+  font-weight: 700;
+}
+.adm-od-summary-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 2px dashed var(--border);
+  padding-top: 18px;
+  margin-top: 4px;
+}
+.adm-od-summary-total-label {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+}
+.adm-od-summary-total-value {
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--red);
+}
+
+/* Select Overrides */
+.adm-od-status-select {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  outline: none;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+.adm-od-status-select:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* Hover effect cho bảng Vouchers */
+.adm-table-row-hover:hover td {
+  background-color: var(--card2) !important;
+}

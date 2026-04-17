@@ -65,7 +65,7 @@ export default function AdminLayout() {
     }, 800);
   };
 
-  // Breadcrumb label theo path
+
   const getBreadcrumb = () => {
     const map = {
       "/admin/dashboard": "Tổng quan",

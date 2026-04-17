@@ -18,6 +18,7 @@ router.get("/top-products", verifyToken, dashboardController.getTopProducts);
 router.get("/users", verifyToken, dashboardController.getUsers);
 router.get("/orders", verifyToken, dashboardController.getAllOrders);
 router.put("/orders/:id/status", verifyToken, dashboardController.updateOrderStatus);
+router.get("/orders/:id", verifyToken, dashboardController.getOrderDetails);
 router.get("/payment-stats", verifyToken, dashboardController.getPaymentStats);
 
 // User management routes

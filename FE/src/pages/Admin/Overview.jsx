@@ -65,7 +65,7 @@ function RevenueAreaChart({ data, isDark, loading }) {
   const max      = Math.max(...values, 1);
   const pts = values.map((v, i) => {
     const x = values.length === 1
-      ? W / 2   // 👉 đặt điểm ở giữa nếu chỉ có 1 data
+      ? W / 2
       : PAD + (i / (values.length - 1)) * (W - PAD * 2);
 
     const y = H - PAD - (v / max) * (H - PAD * 2);

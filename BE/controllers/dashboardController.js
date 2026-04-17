@@ -180,6 +180,41 @@ exports.updateOrderStatus = async (req, res) => {
   } catch (err) { res.status(500).json({ message: "Lỗi server", error: err.message }); }
 };
 
+// GET /api/dashboard/orders/:id  — Xem chi tiết đơn hàng
+exports.getOrderDetails = (req, res) => {
+  const { id } = req.params;
+
+  const sqlOrder = `
+    SELECT o.*, u.name as user_name, u.email as user_email
+    FROM orders o
+    LEFT JOIN users u ON o.user_id = u.id
+    WHERE o.id = ?
+  `;
+  const sqlItems = `
+    SELECT oi.quantity, oi.price, p.name AS product_name, p.image
+    FROM order_items oi 
+    JOIN products p ON oi.product_id = p.id 
+    WHERE oi.order_id = ?
+  `;
+
+  // Query 1: Lấy thông tin chung của đơn hàng
+  db.query(sqlOrder, [id], (err, orderRes) => {
+    if (err) return res.status(500).json({ message: "Lỗi server khi lấy đơn hàng" });
+    if (orderRes.length === 0) return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
+
+    // Query 2: Lấy chi tiết sản phẩm
+    db.query(sqlItems, [id], (err, itemsRes) => {
+      if (err) return res.status(500).json({ message: "Lỗi server khi lấy sản phẩm" });
+      
+      // Trả về gộp cả 2
+      res.json({
+        order: orderRes[0],
+        items: itemsRes
+      });
+    });
+  });
+};
+
 // GET /api/dashboard/product-categories  — Lấy danh sách ID danh mục sản phẩm
 exports.getProductCategories = async (req, res) => {
   try {
