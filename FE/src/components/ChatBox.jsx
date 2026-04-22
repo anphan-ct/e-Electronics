@@ -30,35 +30,6 @@ function ChatBox() {
     }
   };
 
-  // 1. Tải lịch sử Chat (Cả AI và Admin)
-  // useEffect(() => {
-  //   if (!isOpen) return; // only load when chat is opened
-  //   const user = getUser();
-  //   if (!user) return;
-
-  //   axios
-  //     .get(`http://localhost:5000/api/ai/history/${user.id}`)
-  //     .then(res => setAiMessages(res.data))
-  //     .catch(() => setAiMessages([]));
-
-  // }, [isOpen]);
-
-  // useEffect(() => {
-  //   if (!isOpen) return;
-  //   const user = getUser();
-  //   if (!user) return;
-
-  //   const token = localStorage.getItem("token");
-
-  //   axios
-  //     .get(`http://localhost:5000/api/messages/history/${user.id}`, {
-  //       headers: { Authorization: `Bearer ${token}` }
-  //     })
-  //     .then(res => setAdminMessages(res.data))
-  //     .catch(() => setAdminMessages([]));
-
-  // }, [isOpen]);
-
 
   useEffect(() => {
     if (!isOpen) return;

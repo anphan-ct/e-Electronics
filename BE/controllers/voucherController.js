@@ -70,16 +70,39 @@ function calcDiscount(voucher, eligibleTotal) {
 // ════════════════════════════════════════════════════════════
 // CORE VOUCHER LOGIC (Dùng chung cho Checkout và Validate)
 // ════════════════════════════════════════════════════════════
-exports.verifyAndCalculateVoucher = async (code, cartItems, userId) => {
+exports.verifyAndCalculateVoucher = async (code, cartItemsRaw, userId) => {
   const [voucher] = await query("SELECT * FROM vouchers WHERE code = ? AND is_active = 1", [code.trim().toUpperCase()]);
   if (!voucher) throw new Error("Mã voucher không tồn tại hoặc đã bị vô hiệu hóa");
+  
+  // Bảo mật
+  const productIds = cartItemsRaw.map(item => item.product_id || item.id);
+  if (productIds.length === 0) throw new Error("Giỏ hàng trống.");
+
+  const dbProducts = await query("SELECT id, price FROM products WHERE id IN (?)", [productIds]);
+
+
+  const safeCartItems = cartItemsRaw.map(item => {
+    const dbProduct = dbProducts.find(p => p.id === (item.product_id || item.id));
+    if (!dbProduct) throw new Error(`Sản phẩm ID ${item.product_id || item.id} không tồn tại!`);
+    return { ...item, price: parseFloat(dbProduct.price) };
+  })
 
   // 1. Hạn sử dụng
   const now = new Date();
   if (voucher.start_at && new Date(voucher.start_at) > now) throw new Error("Voucher chưa đến thời gian hiệu lực");
   if (voucher.expire_at && new Date(voucher.expire_at) < now) throw new Error("Voucher đã hết hạn");
 
-  // 2. Lượt dùng chung
+
+  // 2. Bảo mật
+  const [userVoucher] = await query(
+    "SELECT id, status FROM user_vouchers WHERE user_id = ? AND voucher_id = ? AND status != 'expired' ORDER BY id DESC LIMIT 1", [userId, voucher.id]
+  );
+
+  if (voucher.source !== 'public' && (!userVoucher || userVoucher.status !== 'active')){
+    throw new Error("Bạn chưa lưu hoặc chưa đổi mã voucher này vào ví!");
+  }
+
+  // 3. Lượt dùng chung
   if (voucher.usage_limit !== null) {
     if (voucher.source !== 'redeem_points') {
       // Voucher săn: Ai thanh toán nhanh thì được
@@ -87,27 +110,30 @@ exports.verifyAndCalculateVoucher = async (code, cartItems, userId) => {
         throw new Error("Rất tiếc, mã voucher này đã được người khác sử dụng hết số lượt.");
       }
     }
-    // LƯU Ý: Nếu là 'redeem_points', ta bỏ qua chặn ở đây vì họ đã tốn điểm đổi rồi.
+    // LƯU Ý: Nếu là 'redeem_points', bỏ qua chặn ở đây vì user đã tốn điểm đổi rồi.
   }
 
-  // 3. Lượt dùng của user cụ thể
+  // 4. Lượt dùng của user cụ thể
   const [{ userUsed }] = await query("SELECT COUNT(*) as userUsed FROM user_vouchers WHERE user_id = ? AND voucher_id = ? AND status = 'used'", [userId, voucher.id]);
   if (userUsed >= voucher.usage_per_user) throw new Error(`Bạn đã dùng voucher này rồi (tối đa ${voucher.usage_per_user} lần)`);
 
-  // 4. Lấy điều kiện áp dụng
+  // 5. Lấy điều kiện áp dụng
   const conditions = await query("SELECT ref_type, ref_id FROM voucher_conditions WHERE voucher_id = ?", [voucher.id]);
   voucher.conditions = conditions;
 
-  // 5. Kiểm tra tính hợp lệ trong giỏ
-  const eligibility = checkCartEligibility(voucher, cartItems);
+  // 6. Kiểm tra tính hợp lệ trong giỏ
+  const eligibility = checkCartEligibility(voucher, safeCartItems);
   if (!eligibility.valid) throw new Error(eligibility.reason);
+  // 7. Kiểm tra đơn tối thiểu
+  const safeOrderTotal = safeCartItems.reduce((s, i) => s + i.price * i.quantity, 0);
+  if (safeOrderTotal < parseFloat(voucher.min_order)) {
+    throw new Error(`Đơn hàng chưa đạt mức tối thiểu $${parseFloat(voucher.min_order).toFixed(2)}.`);
+  }
 
-  // 6. Kiểm tra đơn tối thiểu
-  const orderTotal = cartItems.reduce((s, i) => s + i.price * i.quantity, 0);
-  if (orderTotal < parseFloat(voucher.min_order)) throw new Error(`Đơn tối thiểu $${voucher.min_order}`);
-
-  return {
+return {
     voucher,
+    safeCartItems,
+    safeOrderTotal,
     discountAmount: calcDiscount(voucher, eligibility.eligibleTotal)
   };
 };
@@ -119,22 +145,26 @@ exports.verifyAndCalculateVoucher = async (code, cartItems, userId) => {
 // POST /api/vouchers/validate
 exports.validateVoucher = async (req, res) => {
   const { code, cartItems = [] } = req.body;
-  if (!code) return res.status(400).json({ message: "Vui lòng nhập mã voucher" });
+  
+  if (!code) return res.status(400).json({ message: "Vui lòng nhập mã voucher." });
+  if (!Array.isArray(cartItems) || cartItems.length === 0) return res.status(400).json({ message: "Giỏ hàng không hợp lệ." });
 
   try {
     const result = await exports.verifyAndCalculateVoucher(code, cartItems, req.user.id);
-    const orderTotal = cartItems.reduce((s, i) => s + i.price * i.quantity, 0);
     
+    // Sử dụng số tiền đã được verify từ Database
+    const finalTotal = parseFloat((result.safeOrderTotal - result.discountAmount).toFixed(2));
+
     res.json({
       valid: true,
       voucher: result.voucher,
       discountAmount: result.discountAmount,
-      eligibleTotal: orderTotal,
-      orderTotal,
-      finalTotal: parseFloat((orderTotal - result.discountAmount).toFixed(2)),
+      eligibleTotal: result.safeOrderTotal, // Hoặc eligibility.eligibleTotal tùy UI bạn cần hiển thị
+      orderTotal: result.safeOrderTotal,
+      finalTotal: finalTotal > 0 ? finalTotal : 0, // Đề phòng voucher giảm âm tiền
     });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(400).json({ valid: false, message: err.message });
   }
 };
 

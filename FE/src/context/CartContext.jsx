@@ -53,7 +53,7 @@ export const CartProvider = ({ children }) => {
     };
   }, []);
  
-  // Giữ nguyên 100% các hàm gốc
+
   const addToCart = (product) => {
     setCart((prevCart) => {
       const isItemInCart = prevCart.find((item) => item.id === product.id);

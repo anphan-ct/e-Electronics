@@ -1,5 +1,5 @@
 const cron = require("node-cron");
-const db = require("../config/db"); // Trỏ đúng đường dẫn file db
+const db = require("../config/db");
 
 function query(sql, params = []) {
   return new Promise((resolve, reject) => {

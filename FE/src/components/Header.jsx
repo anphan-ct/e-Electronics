@@ -39,11 +39,9 @@ function Header() {
   const isActive = (path) => location.pathname === path;
 
   const confirmLogout = () => {
-    // CHỈ THAY ĐỔI: xóa token và user thay vì localStorage.clear()
-    // để giữ lại cart data (cart_user_xxx) trong localStorage
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    localStorage.removeItem("theme"); // giữ lại nếu muốn giữ theme, xóa nếu không
+    localStorage.removeItem("theme");
 
     setUser(null);
     // Bắn event để CartContext biết user đã logout → reset cart về rỗng

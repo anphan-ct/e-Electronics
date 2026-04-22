@@ -13,7 +13,6 @@ function ProductCard({ product }) {
  
     if (!user) {
       toast.error("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!");
-      // CHỈ THAY ĐỔI: mở modal login thay vì navigate("/login")
       const loginModal = document.getElementById("loginModal");
       if (window.bootstrap && loginModal) {
         window.bootstrap.Modal.getOrCreateInstance(loginModal).show();
@@ -28,7 +27,6 @@ function ProductCard({ product }) {
   return (
     // FIX: Đã sửa lại class cột để đồng bộ với layout Shop/Search
     <div className="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
-      {/* THÊM VIỀN ĐẬM: Dùng border-2 và shadow để nổi bật hơn ở cả 2 chế độ */}
       <div className={`card h-100 auth-modal-content product-card-hover transition-all border border-2 ${
         theme === "dark"
           ? "bg-dark text-light border-secondary shadow"
