@@ -1494,3 +1494,193 @@ body.dark .chatbox-input-wrap:focus-within { background: #3a3d4e; }
 .navbar-brand:hover svg {
   transform: scale(1.05); /* Hiệu ứng phóng nhẹ khi di chuột vào logo */
 }
+
+
+/* ============================================================
+(Product Article)
+============================================================ */
+
+/* ── Nội dung bài viết phía User ────────────────────────── */
+.product-article-content h2 {
+  font-size: 22px;
+  font-weight: 800;
+  margin: 28px 0 12px;
+  color: inherit;
+  line-height: 1.4;
+}
+
+.product-article-content h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 22px 0 10px;
+  color: inherit;
+  line-height: 1.4;
+}
+
+.product-article-content h2:first-child,
+.product-article-content h3:first-child {
+  margin-top: 0;
+}
+
+.product-article-content p {
+  margin: 0 0 16px;
+  line-height: 1.85;
+}
+
+.product-article-content ul,
+.product-article-content ol {
+  margin: 0 0 16px;
+  padding-left: 24px;
+}
+
+.product-article-content li {
+  margin-bottom: 8px;
+  line-height: 1.7;
+}
+
+.product-article-content strong {
+  font-weight: 700;
+  color: #6366f1;
+}
+
+body.dark .product-article-content strong {
+  color: #a5b4fc;
+}
+
+.product-article-content em {
+  font-style: italic;
+  opacity: 0.85;
+}
+
+/* ── Nội dung preview trong Admin Editor ─────────────────── */
+.article-preview-content h2 {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 20px 0 10px;
+  color: inherit;
+}
+
+.article-preview-content h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 16px 0 8px;
+  color: inherit;
+}
+
+.article-preview-content h2:first-child,
+.article-preview-content h3:first-child {
+  margin-top: 0;
+}
+
+.article-preview-content p {
+  margin: 0 0 12px;
+  line-height: 1.75;
+}
+
+.article-preview-content ul,
+.article-preview-content ol {
+  margin: 0 0 12px;
+  padding-left: 20px;
+}
+
+.article-preview-content li {
+  margin-bottom: 6px;
+  line-height: 1.65;
+}
+
+.article-preview-content strong {
+  font-weight: 700;
+  color: #6366f1;
+}
+
+.article-preview-content em {
+  font-style: italic;
+  opacity: 0.85;
+}
+
+/* ── Animation spin cho loading icon ─────────────────────── */
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.animate-spin {
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+/* =========================================
+   PRODUCT DETAIL CUSTOM STYLES
+========================================= */
+.pd-article h2 { font-size: 1.25rem; font-weight: bold; margin: 1.4rem 0 .6rem; color: inherit; }
+.pd-article h3 { font-size: 1.05rem; font-weight: bold; margin: 1.1rem 0 .5rem; color: inherit; }
+.pd-article h2:first-child, .pd-article h3:first-child { margin-top: 0; }
+.pd-article p  { margin: 0 0 .9rem; line-height: 1.8; }
+.pd-article ul, .pd-article ol { margin: 0 0 .9rem; padding-left: 1.4rem; }
+.pd-article li { margin-bottom: .45rem; line-height: 1.7; }
+.pd-article strong { font-weight: bold; color: inherit; }
+.pd-article em { font-style: italic; }
+
+/* Tab bar dính (Sticky) */
+.pd-sticky-tabs {
+  position: sticky; top: 0; z-index: 90;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* Hiệu ứng ngựa vằn cho bảng thông số */
+.pd-spec-row:nth-child(even) { background: rgba(13,110,253,.04); }
+.dark .pd-spec-row:nth-child(even) { background: rgba(255,255,255,.02); }
+
+/* Animation mượt mà */
+@keyframes pd-fadein {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.pd-section { animation: pd-fadein .35s ease both; }
+
+/* Zoom ảnh khi di chuột */
+.pd-img-wrap img { transition: transform .45s ease; }
+.pd-img-wrap:hover img { transform: scale(1.04); }
+
+/* Các nút bấm (Buttons) */
+.pd-btn-cart {
+  width: 100%; padding: 15px 20px; border: none;
+  border-radius: 14px; cursor: pointer; font-weight: bold; font-size: 16px;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);
+  color: white; letter-spacing: 0.3px;
+  box-shadow: 0 6px 20px rgba(13,110,253,.35);
+  transition: transform .15s, box-shadow .15s;
+}
+.pd-btn-cart:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(13,110,253,.45);
+}
+
+.pd-btn-cart-sm {
+  width: 100%; padding: 12px; border: none;
+  border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 14px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);
+  color: white;
+  box-shadow: 0 4px 14px rgba(13,110,253,.3);
+  transition: opacity .2s;
+}
+.pd-btn-cart-sm:hover { opacity: 0.88; }
+
+.pd-btn-toggle {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 28px; border-radius: 10px; cursor: pointer;
+  font-weight: bold; font-size: 13px;
+  background: #eff6ff; color: #0d6efd;
+  border: 1.5px solid rgba(13,110,253,.25);
+  transition: background .2s;
+}
+.pd-btn-toggle:hover { background: #dbeafe; }
+.dark .pd-btn-toggle { 
+  background: rgba(99,102,241,.1); 
+  border-color: rgba(99,102,241,.25); 
+  color: #818cf8; 
+}
+.dark .pd-btn-toggle:hover { background: rgba(99,102,241,.2); }

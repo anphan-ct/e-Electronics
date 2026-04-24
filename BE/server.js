@@ -17,6 +17,7 @@ const orderRoutes     = require("./routes/orderRoutes");
 const securityRoutes  = require("./routes/securityRoutes");
 const loyaltyRoutes = require("./routes/loyaltyRoutes");
 const voucherRoutes = require("./routes/voucherRoutes");
+const articleRoutes = require("./routes/articleRoutes");
 const axios = require("axios");
 
 const app = express();
@@ -34,6 +35,7 @@ app.use("/api/orders",    orderRoutes);
 app.use("/api/security",  securityRoutes);
 app.use("/api/loyalty", loyaltyRoutes);
 app.use("/api/vouchers", voucherRoutes);
+app.use("/api/articles", articleRoutes);
 
 require("./cron/loyaltyCron");
 

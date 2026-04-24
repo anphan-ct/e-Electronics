@@ -1,9 +1,11 @@
+// FE/src/pages/Admin/AdminProductDetail.jsx
 import { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { LoadingSpinner } from "../../layouts/AdminUI";
 import { ThemeContext } from "../../context/ThemeContext";
+import ProductArticleManager from "./ProductArticleManager";
 
 const auth = () => ({ Authorization: `Bearer ${localStorage.getItem("token")}` });
 
@@ -107,6 +109,18 @@ export default function AdminProductDetail() {
 
         </div>
       </div>
+
+      {/* ─── PHẦN BÀI VIẾT SẢN PHẨM (TÍCH HỢP AI) ─── */}
+      {/*
+        ProductArticleManager được đặt bên dưới thẻ sản phẩm.
+        Admin có thể vừa xem thông số kỹ thuật vừa quản lý bài viết mà không cần chuyển trang.
+      */}
+      <ProductArticleManager
+        productId={product.id}
+        productName={product.name}
+        isDark={isDark}
+      />
+
     </div>
   );
 }
